@@ -1,11 +1,11 @@
-package go_bus
+package bus
 
 import (
 	"fmt"
 )
 
 type syncTopic struct {
-	topicImpl
+	abstractTopicImpl
 }
 
 func (s syncTopic) Publish(data interface{}) error {

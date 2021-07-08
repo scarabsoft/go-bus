@@ -1,4 +1,4 @@
-package go_bus
+package bus
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ type Bus interface {
 
 	//Unsubscribe(handler event.EventHandler) error
 
-	CreateTopic(name string, options ...Option) error
+	CreateTopic(name string) error
 }
 
 type busImpl struct {
@@ -33,7 +33,7 @@ func (b *busImpl) Get(topic string) Topic {
 }
 
 //FIXME should be method which accepts builder instead of options
-func (b *busImpl) CreateTopic(name string, options ...Option) error {
+func (b *busImpl) CreateTopic(name string) error {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 

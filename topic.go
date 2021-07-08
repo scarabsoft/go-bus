@@ -1,4 +1,6 @@
-package go_bus
+package bus
+
+import "sync/atomic"
 
 type Topic interface {
 	Publish(data interface{}) error       // FIXME better would be ...interface{}
@@ -7,9 +9,17 @@ type Topic interface {
 	//FIXME add Close() 				 // FIXME proper closing topic in aysn case use wait groups
 }
 
-type topicImpl struct {
-	name     string
-	handlers []EventHandler
+type abstractTopicImpl struct {
+	ID          uint
+	name        string
+	handlers    []EventHandler
+	idGenerator func() uint64
 }
 
-type Option func(topic Topic) error
+//generates topic id which guarantees to be thread safe and monotonous
+func topicIdGenerator() func() uint64 {
+	var idx uint64 = 0
+	return func() uint64 {
+		return atomic.AddUint64(&idx, 1)
+	}
+}

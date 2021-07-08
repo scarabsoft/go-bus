@@ -1,18 +1,19 @@
-package go_bus
+package bus
 
 import (
 	"fmt"
 )
 
 type asyncTopic struct {
-	topicImpl
+	abstractTopicImpl
 }
 
 func newAsyncTopic(name string) Topic {
 	return &asyncTopic{
-		topicImpl: topicImpl{
-			name:     name,
-			handlers: []EventHandler{},
+		abstractTopicImpl: abstractTopicImpl{
+			name:        name,
+			handlers:    []EventHandler{},
+			idGenerator: topicIdGenerator(),
 		},
 	}
 }
@@ -20,7 +21,8 @@ func newAsyncTopic(name string) Topic {
 func (a asyncTopic) Publish(data interface{}) error {
 	//FIXME error if finished
 	go func() {
-		e := Event{Topic: a.name, Payload: data} // FIXME this should be a simple event generator to have auto increment ids
+		//e := Event{Topic: a.name, Payload: data} // FIXME this should be a simple event generator to have auto increment ids
+		e := newEvent(a.idGenerator(), a.name, data) // FIXME this should be a simple event generator to have auto increment ids
 		for _, handler := range a.handlers {
 			_ = handler(e)
 		}

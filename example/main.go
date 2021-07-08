@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	bus "github.com/scarabsoft/go-bus"
+	"github.com/scarabsoft/go-bus"
 	"time"
 )
 
@@ -30,21 +30,23 @@ import (
 
 func main() {
 
-
-
 	_ = bus.CreateTopic("someTopic")
 	t := bus.Get("someTopic")
 
 	_ = t.Subscribe(func(event bus.Event) error {
-		fmt.Println("Handle:", event.Topic, event.Payload)
+		fmt.Println("Handle:", event.ID, event.Topic, event.Payload)
 		return nil
 	})
 
-	_ = t.Publish("Hello")
-	_ = t.Publish("World")
+	go func() {
+		for {
+			_ = t.Publish("Hello")
+			_ = t.Publish("World")
+		}
+	}()
 
 	//FIXME close / wait
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 
 	fmt.Println(t)
 }
