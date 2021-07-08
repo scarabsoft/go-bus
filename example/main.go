@@ -30,23 +30,34 @@ import (
 
 func main() {
 
-	_ = bus.CreateTopic("someTopic")
+	_, _ = bus.CreateTopic("someTopic")
 	t := bus.Get("someTopic")
 
-	_ = t.Subscribe(func(event bus.Event) error {
+	handler := func(event bus.Event) error {
 		fmt.Println("Handle:", event.ID, event.Topic, event.Payload)
 		return nil
-	})
+	}
 
-	go func() {
-		for {
-			_ = t.Publish("Hello")
-			_ = t.Publish("World")
-		}
-	}()
+	_ = t.Subscribe(handler)
+
+	//stop := make(chan struct{})
+
+	//go func() {
+	//	for {
+	//		select {
+	//		case <-stop:
+	//		default:
+	_, _ = bus.Publish("someTopic", "Hello")
+	_ = t.Publish("World")
+	//}
+	//
+	//}
+	//}()
 
 	//FIXME close / wait
-	time.Sleep(1 * time.Second)
+	time.Sleep(10 * time.Millisecond)
+
+	//stop <- struct{}{}
 
 	fmt.Println(t)
 }

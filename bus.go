@@ -8,13 +8,13 @@ import (
 type Bus interface {
 	Get(topic string) Topic
 
-	//Publish(topic string, data interface{}) error
+	Publish(topic string, data interface{}) (Topic, error)
 	//
 	//Subscribe(topic string, handler event.EventHandler) error
 
 	//Unsubscribe(handler event.EventHandler) error
 
-	CreateTopic(name string) error
+	CreateTopic(name string) (Topic, error)
 }
 
 type busImpl struct {
@@ -32,8 +32,17 @@ func (b *busImpl) Get(topic string) Topic {
 	return b.topics[topic]
 }
 
+func (b *busImpl) Publish(topic string, data interface{}) (Topic, error) {
+	//FIXME if topic does not exist create default one and publish
+	t := b.Get(topic)
+	if err := t.Publish(data); err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+
 //FIXME should be method which accepts builder instead of options
-func (b *busImpl) CreateTopic(name string) error {
+func (b *busImpl) CreateTopic(name string) (Topic, error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
@@ -42,16 +51,16 @@ func (b *busImpl) CreateTopic(name string) error {
 	// FIXME check whether topic already exists, if so --> error
 	// FIXME add topic
 
-	//s := syncTopic{name: name, handlers: []event.EventHandler{}}
-	//s := topic.asyncTopic{name: name, handlers: []event.EventHandler{}}
-	s := newAsyncTopic(name)
-	fmt.Println(s)
+	//result := syncTopic{name: name, handlers: []event.EventHandler{}}
+	//result := topic.asyncTopic{name: name, handlers: []event.EventHandler{}}
+	result := newAsyncTopic(name)
+	fmt.Println(result)
 
-	b.topics[name] = s
-	return nil
+	b.topics[name] = result
+	return result, nil
 }
 
-func new() Bus {
+func newBus() Bus {
 	return &busImpl{
 		topics: make(map[string]Topic),
 		lock:   sync.RWMutex{},

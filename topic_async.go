@@ -1,25 +1,23 @@
 package bus
 
-import (
-	"fmt"
-)
-
 type asyncTopic struct {
 	abstractTopicImpl
 }
 
 func newAsyncTopic(name string) Topic {
 	return &asyncTopic{
-		abstractTopicImpl: abstractTopicImpl{
-			name:        name,
-			handlers:    []EventHandler{},
-			idGenerator: topicIdGenerator(),
-		},
+		abstractTopicImpl: newAbstractTopicImpl(name),
 	}
 }
 
-func (a asyncTopic) Publish(data interface{}) error {
-	//FIXME error if finished
+func (a *asyncTopic) Publish(data interface{}) error {
+	a.lock.RLock()
+	defer a.lock.RUnlock()
+
+	if a.closed {
+		return ErrTopicClosed
+	}
+
 	go func() {
 		//e := Event{Topic: a.name, Payload: data} // FIXME this should be a simple event generator to have auto increment ids
 		e := newEvent(a.idGenerator(), a.name, data) // FIXME this should be a simple event generator to have auto increment ids
@@ -27,12 +25,5 @@ func (a asyncTopic) Publish(data interface{}) error {
 			_ = handler(e)
 		}
 	}()
-	return nil
-}
-
-func (a *asyncTopic) Subscribe(handler EventHandler) error {
-	//FIXME error if finished
-	fmt.Println("subscribe async", a.name)
-	a.handlers = append(a.handlers, handler)
 	return nil
 }

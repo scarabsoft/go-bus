@@ -1,13 +1,17 @@
 package bus
 
 var (
-	std = new()
+	std = newBus()
 )
 
 func Get(topic string) Topic {
 	return std.Get(topic)
 }
 
-func CreateTopic(name string) error {
+func Publish(topic string, data interface{}) (Topic, error) {
+	return std.Publish(topic, data)
+}
+
+func CreateTopic(name string) (Topic, error) {
 	return std.CreateTopic(name)
 }
