@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/scarabsoft/go-bus"
+	"github.com/scarabsoft/go-bus/internal/pool"
 	"time"
 )
 
@@ -29,21 +30,64 @@ func (c CustomEvent) Test() string {
 }
 
 func main() {
-	bus.CreateTopicIfNotExists(bus.AsyncTopic)
+	//bus.CreateTopicIfNotExists(bus.SyncTopic)
+	//
+	//_ = bus.Subscribe("test", bus.EventHandler(func(event bus.Event) {
+	//	fmt.Println(event)
+	//}))
+	//
+	//for i := 0; i < 100; i++ {
+	//	func() {
+	//		if err := bus.Publish("test", "test"); err != nil {
+	//			fmt.Println(err)
+	//		}
+	//	}()
+	//}
+	//
+	//time.Sleep(1 * time.Second)
 
-	_ = bus.Subscribe("test", bus.EventHandler(func(event bus.Event) {
-		fmt.Println(event)
-	}))
+	p := pool.NewPool(pool.Options{
+		MaxQueueSize: 1,
+		MaxWorkers:   1,
+	})
+
+	p.Start()
 
 	for i := 0; i < 100; i++ {
-		func() {
-			if err := bus.Publish("test", "test"); err != nil {
-				fmt.Println(err)
-			}
-		}()
+		_ = p.Submit(pool.Task{
+			Payload: pool.TaskPayload{
+				ID:      uint64(i),
+				Name:    "XYZ",
+				Payload: struct{}{},
+			},
+			Handler: bus.EventHandler(func(evt bus.Event) {
+				fmt.Println(evt)
+				time.Sleep(500 * time.Millisecond)
+			}),
+		})
 	}
+	time.Sleep(1 * time.Second)
+
+	p.Stop()
 
 	time.Sleep(1 * time.Second)
+
+	err := p.Submit(pool.Task{
+		Payload: pool.TaskPayload{
+			ID:      uint64(10),
+			Name:    "XYZ",
+			Payload: struct{}{},
+		},
+		Handler: bus.EventHandler(func(evt bus.Event) {
+			fmt.Println(evt)
+		}),
+	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	time.Sleep(100 * time.Second)
 
 	////topic, _ := bus.CreateTopic("topic", bus.AsyncTopic)
 	//topic, _ := bus.CreateTopic("topic", bus.SyncTopic)

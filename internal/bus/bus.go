@@ -10,11 +10,13 @@ type Bus interface {
 
 	Subscribe(name string, handlers ...func(ID uint64, name string, payload interface{})) error
 
-	//Unsubscribe(handler event.EventHandler) error
+	//Unsubscribe(name string, handler event.EventHandler) error
 
 	CreateTopic(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error)
 
 	Get(name string) (topic.Topic, error)
+
+	//DeleteTopic(name string)
 }
 
 type busImpl struct {
@@ -59,9 +61,8 @@ func (b *busImpl) Subscribe(name string, handlers ...func(ID uint64, name string
 func (b *busImpl) getOrCreateEventually(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error) {
 	b.lock.RLock()
 	if t, ok := b.topics[name]; !ok {
-		b.lock.RUnlock()
 		if fn != nil {
-
+			b.lock.RUnlock()
 			b.lock.Lock()
 			defer b.lock.Unlock()
 
@@ -74,6 +75,7 @@ func (b *busImpl) getOrCreateEventually(name string, fn func(topic topic.RootBui
 			b.topics[name] = t
 			return t, nil
 		}
+		b.lock.RUnlock()
 		return nil, topic.ErrDoesNotExists
 	} else {
 		b.lock.RUnlock()
