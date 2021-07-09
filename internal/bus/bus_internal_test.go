@@ -41,17 +41,17 @@ func (s *spyTopicImpl) Name() string {
 	return givenTopicName
 }
 
-func (s *spyTopicImpl) Publish(payloads ...interface{}) error {
+func (s *spyTopicImpl) Publish(...interface{}) error {
 	s.PublishCount++
 	return nil
 }
 
-func (s *spyTopicImpl) Subscribe(handlers ...func(ID uint64, topic string, payload interface{})) error {
+func (s *spyTopicImpl) Subscribe(...func(ID uint64, topic string, payload interface{})) error {
 	s.SubscribeCount++
 	return nil
 }
 
-func (s *spyTopicImpl) Unsubscribe(handlers ...func(ID uint64, topic string, payload interface{})) error {
+func (s *spyTopicImpl) Unsubscribe(...func(ID uint64, topic string, payload interface{})) error {
 	s.UnsubscribeCount++
 	return nil
 }
@@ -65,7 +65,7 @@ type spyTopicBuilder struct {
 	topic *spyTopicImpl
 }
 
-func (s spyTopicBuilder) Name(name string) topic.Builder {
+func (s spyTopicBuilder) Name(string) topic.Builder {
 	return s
 }
 
@@ -73,7 +73,10 @@ func (s spyTopicBuilder) Build() topic.Topic {
 	return s.topic
 }
 
-var ErrTestError = errors.New("some test error")
+var ErrTestPublishError = errors.New("ErrTestPublishError")
+var ErrTestSubscribeError = errors.New("ErrTestSubscribeError")
+var ErrTestUnsubscribeError = errors.New("ErrTestUnsubscribeError")
+var ErrTestCloseError = errors.New("ErrTestCloseError")
 
 type failingTopic struct{}
 
@@ -81,20 +84,20 @@ func (f failingTopic) Name() string {
 	return ""
 }
 
-func (f failingTopic) Publish(payloads ...interface{}) error {
-	return ErrTestError
+func (f failingTopic) Publish(...interface{}) error {
+	return ErrTestPublishError
 }
 
-func (f failingTopic) Subscribe(handlers ...func(ID uint64, topic string, payload interface{})) error {
-	return ErrTestError
+func (f failingTopic) Subscribe(...func(ID uint64, topic string, payload interface{})) error {
+	return ErrTestSubscribeError
 }
 
-func (f failingTopic) Unsubscribe(handlers ...func(ID uint64, topic string, payload interface{})) error {
-	return ErrTestError
+func (f failingTopic) Unsubscribe(...func(ID uint64, topic string, payload interface{})) error {
+	return ErrTestUnsubscribeError
 }
 
 func (f failingTopic) Close() error {
-	return ErrTestError
+	return ErrTestCloseError
 }
 
 func TestCreateTopic(t *testing.T) {
@@ -236,7 +239,7 @@ func TestPublish(t *testing.T) {
 
 		err := testInstance.Publish(givenTopicName, givenPayload, givenPayload, givenPayload)
 		assert.That(err, is.NotNil())
-		assert.That(err, is.EqualTo(ErrTestError))
+		assert.That(err, is.EqualTo(ErrTestPublishError))
 
 	})
 }
@@ -292,7 +295,7 @@ func TestSubscribe(t *testing.T) {
 		assert.That(spyTopic.UnsubscribeCount, is.EqualTo(0))
 	})
 
-	t.Run("publishing failed", func(t *testing.T) {
+	t.Run("subscribing failed", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
 
 		testInstance := New()
@@ -300,7 +303,7 @@ func TestSubscribe(t *testing.T) {
 
 		err := testInstance.Subscribe(givenTopicName, givenHandler, givenHandler, givenHandler)
 		assert.That(err, is.NotNil())
-		assert.That(err, is.EqualTo(ErrTestError))
+		assert.That(err, is.EqualTo(ErrTestSubscribeError))
 
 	})
 }
