@@ -7,11 +7,11 @@ type Bus interface {
 
 	Subscribe(name string, handlers ...func(ID uint64, name string, payload interface{})) error
 
-	//Unsubscribe(name string, handler event.EventHandler) error
+	Unsubscribe(name string, handlers ...func(ID uint64, name string, payload interface{})) error
 
 	CreateTopic(name string, tb topic.Builder) (topic.Topic, error)
 
 	Get(name string) (topic.Topic, error)
 
-	//DeleteTopic(name string)
+	DeleteTopic(name string)
 }

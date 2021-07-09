@@ -5,13 +5,13 @@ type syncTopicImpl struct {
 }
 
 func (s *syncTopicImpl) Publish(payloads ...interface{}) error {
-	if err := s.abstractTopicImpl.Publish(payloads); err != nil {
-		return err
-	}
-
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
+	if s.closed {
+		return ErrAlreadyClosed
+	}
+	
 	for _, payload := range payloads {
 		id := s.generateID()
 		for _, handler := range s.handlers {

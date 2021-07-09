@@ -11,11 +11,6 @@ type busImpl struct {
 	defaultTopicBuilder topic.Builder
 }
 
-// returns the topic, if not present and a default topic builder was set, it tries to create a new topic
-func (b *busImpl) Get(name string) (topic.Topic, error) {
-	return b.getOrCreateEventually(name, b.defaultTopicBuilder)
-}
-
 func (b *busImpl) Publish(name string, payloads ...interface{}) error {
 	var t topic.Topic
 	var err error
@@ -42,6 +37,17 @@ func (b *busImpl) Subscribe(name string, handlers ...func(ID uint64, name string
 		return err
 	}
 	return nil
+}
+
+func (b *busImpl) Unsubscribe(name string, handlers ...func(ID uint64, name string, payload interface{})) error {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	if t, ok := b.topics[name]; !ok {
+		return topic.ErrDoesNotExists
+	} else {
+		return t.Unsubscribe(handlers...)
+	}
 }
 
 func (b *busImpl) getOrCreateEventually(name string, tb topic.Builder) (topic.Topic, error) {
@@ -72,6 +78,15 @@ func (b *busImpl) getOrCreateEventually(name string, tb topic.Builder) (topic.To
 // creates and registers a new topic
 func (b *busImpl) CreateTopic(name string, tb topic.Builder) (topic.Topic, error) {
 	return b.getOrCreateEventually(name, tb)
+}
+
+// returns the topic, if not present and a default topic builder was set, it tries to create a new topic
+func (b *busImpl) Get(name string) (topic.Topic, error) {
+	return b.getOrCreateEventually(name, b.defaultTopicBuilder)
+}
+
+func (b *busImpl) DeleteTopic(name string) {
+	panic("implement me")
 }
 
 // sets the default topic builder

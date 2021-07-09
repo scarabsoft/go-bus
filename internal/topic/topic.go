@@ -1,6 +1,7 @@
 package topic
 
 import (
+	"reflect"
 	"sync"
 	"sync/atomic"
 )
@@ -26,17 +27,6 @@ func (a *abstractTopicImpl) Name() string {
 	return a.name
 }
 
-func (a *abstractTopicImpl) Publish(data ...interface{}) error {
-	a.lock.RLock()
-	defer a.lock.RUnlock()
-
-	if a.closed {
-		return ErrAlreadyClosed
-	}
-
-	return nil
-}
-
 func (a *abstractTopicImpl) Subscribe(handlers ...func(ID uint64, name string, payload interface{})) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
@@ -45,6 +35,31 @@ func (a *abstractTopicImpl) Subscribe(handlers ...func(ID uint64, name string, p
 		return ErrAlreadyClosed
 	}
 	a.handlers = append(a.handlers, handlers...)
+	return nil
+}
+
+func (a *abstractTopicImpl) Unsubscribe(handlers ...func(ID uint64, topic string, payload interface{})) error {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+
+	if a.closed {
+		return ErrAlreadyClosed
+	}
+	keep := make([]func(ID uint64, topic string, payload interface{}), 0)
+	for _, currentHandler := range a.handlers {
+		found := false
+		for _, handler := range handlers {
+			if reflect.ValueOf(currentHandler) == reflect.ValueOf(handler) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			keep = append(keep, currentHandler)
+		}
+	}
+	a.handlers = make([]func(ID uint64, topic string, payload interface{}), len(keep))
+	copy(a.handlers, keep)
 	return nil
 }
 

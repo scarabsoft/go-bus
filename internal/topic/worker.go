@@ -11,6 +11,13 @@ type workerTopicImpl struct {
 }
 
 func (w *workerTopicImpl) Publish(payloads ...interface{}) error {
+	w.lock.RLock()
+	defer w.lock.RUnlock()
+
+	if w.closed {
+		return ErrAlreadyClosed
+	}
+
 	for _, payload := range payloads {
 		id := w.generateID()
 		for _, handler := range w.handlers {

@@ -45,3 +45,88 @@ func TestTopicIdGenerator(t *testing.T) {
 	nextId := testInstance()
 	assert.That(nextId, is.EqualTo(uint64(parallel*iterations+1)))
 }
+
+func TestAbstractTopicImpl_Unsubscribe(t *testing.T) {
+	givenHandler := func(ID uint64, name string, payload interface{}) {}
+	anotherHandler := func(ID uint64, name string, payload interface{}) {}
+
+	t.Run("Unsubscribe from already closed topic", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+		testInstance.closed = true
+
+		err := testInstance.Unsubscribe(givenHandler)
+		assert.That(err, is.NotNil())
+		assert.That(err.Error(), is.EqualTo("topic already closed"))
+	})
+
+	t.Run("Unsubscribe from empty topic", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+
+		err := testInstance.Unsubscribe(givenHandler)
+		assert.That(err, is.Nil())
+	})
+
+	t.Run("Unsubscribe not registered handler from topic", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+		testInstance.handlers = append(testInstance.handlers, givenHandler)
+
+		err := testInstance.Unsubscribe(anotherHandler)
+		assert.That(err, is.Nil())
+
+		assert.That(testInstance.handlers, has.Length(1))
+		assert.That(testInstance.handlers, has.Item(givenHandler))
+	})
+
+	t.Run("Unsubscribe registered handle but keep other", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+		testInstance.handlers = append(testInstance.handlers, givenHandler, anotherHandler)
+
+		err := testInstance.Unsubscribe(givenHandler)
+		assert.That(err, is.Nil())
+
+		assert.That(testInstance.handlers, has.Length(1))
+		assert.That(testInstance.handlers, has.Item(anotherHandler))
+	})
+
+	t.Run("Unsubscribe them all", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+		testInstance.handlers = append(testInstance.handlers, givenHandler, anotherHandler)
+
+		err := testInstance.Unsubscribe(givenHandler, anotherHandler)
+		assert.That(err, is.Nil())
+
+		assert.That(testInstance.handlers, is.Empty())
+	})
+}
+
+func TestAbstractTopicImpl_Close(t *testing.T) {
+	assert := hamcrest.NewAssertion(t)
+
+	testInstance := newAbstractTopicImpl()
+
+	err := testInstance.Close()
+	assert.That(err, is.Nil())
+
+	assert.That(testInstance.closed, is.True())
+}
+
+func TestAbstractTopicImpl_New(t *testing.T) {
+	assert := hamcrest.NewAssertion(t)
+
+	testInstance := newAbstractTopicImpl()
+	
+	assert.That(testInstance.closed, is.False())
+	assert.That(testInstance.generateID, is.NotNil())
+	assert.That(testInstance.generateID(), is.EqualTo(uint64(1)))
+	assert.That(testInstance.handlers, is.Empty())
+}
