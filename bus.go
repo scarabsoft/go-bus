@@ -8,9 +8,9 @@ import (
 type Bus interface {
 	Get(topic string) Topic
 
-	Publish(topic string, data interface{}) (Topic, error)
+	Publish(topic string, data ...interface{}) (Topic, error)
 	//
-	//Subscribe(topic string, handler event.EventHandler) error
+	//Subscribe(topic string, handler ...event.EventHandler) error
 
 	//Unsubscribe(handler event.EventHandler) error
 
@@ -32,10 +32,10 @@ func (b *busImpl) Get(topic string) Topic {
 	return b.topics[topic]
 }
 
-func (b *busImpl) Publish(topic string, data interface{}) (Topic, error) {
+func (b *busImpl) Publish(topic string, data ...interface{}) (Topic, error) {
 	//FIXME if topic does not exist create default one and publish
 	t := b.Get(topic)
-	if err := t.Publish(data); err != nil {
+	if err := t.Publish(data...); err != nil {
 		return nil, err
 	}
 	return t, nil

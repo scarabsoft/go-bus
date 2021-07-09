@@ -4,13 +4,19 @@ type syncTopic struct {
 	abstractTopicImpl
 }
 
-func (s *syncTopic) Publish(data interface{}) error {
+func (s *syncTopic) Publish(data ...interface{}) error {
+	if err := s.abstractTopicImpl.Publish(data); err != nil {
+		return err
+	}
+
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	e := Event{Topic: s.name, Payload: data}
-	for _, handler := range s.handlers {
-		_ = handler(e)
+	for _, d := range data {
+		e := newEvent(s.idGenerator(), s.name, d)
+		for _, handler := range s.handlers {
+			_ = handler(e)
+		}
 	}
 	return nil
 }

@@ -10,7 +10,7 @@ func newAsyncTopic(name string) Topic {
 	}
 }
 
-func (a *asyncTopic) Publish(data interface{}) error {
+func (a *asyncTopic) Publish(data ...interface{}) error {
 	a.lock.RLock()
 	defer a.lock.RUnlock()
 
@@ -18,13 +18,15 @@ func (a *asyncTopic) Publish(data interface{}) error {
 		return ErrTopicClosed
 	}
 
-	go func() {
-		//e := Event{Topic: a.name, Payload: data} // FIXME this should be a simple event generator to have auto increment ids
-		e := newEvent(a.idGenerator(), a.name, data) // FIXME this should be a simple event generator to have auto increment ids
-		for _, handler := range a.handlers {
-			_ = handler(e)
-		}
-	}()
+	for _, d:= range data {
+		go func() {
+			//e := Event{Topic: a.name, Payload: data} // FIXME this should be a simple event generator to have auto increment ids
+			e := newEvent(a.idGenerator(), a.name, d) // FIXME this should be a simple event generator to have auto increment ids
+			for _, handler := range a.handlers {
+				_ = handler(e)
+			}
+		}()
+	}
 	return nil
 }
 

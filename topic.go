@@ -11,8 +11,8 @@ var ErrTopicClosed = errors.New("topic already closed")
 type Topic interface {
 	Name() string
 	//FIXME Options map[string]interface{} ?
-	Publish(data interface{}) error       // FIXME better would be ...interface{}
-	Subscribe(handler EventHandler) error // FIXME better would be ...event.EventHandler
+	Publish(data ...interface{}) error
+	Subscribe(handlers ...EventHandler) error
 	Close() error
 }
 
@@ -50,7 +50,7 @@ func (a *abstractTopicImpl) Name() string {
 	return a.name
 }
 
-func (a *abstractTopicImpl) Publish(data interface{}) error {
+func (a *abstractTopicImpl) Publish(data ...interface{}) error {
 	a.lock.RLock()
 	defer a.lock.RUnlock()
 
@@ -61,14 +61,14 @@ func (a *abstractTopicImpl) Publish(data interface{}) error {
 	return nil
 }
 
-func (a *abstractTopicImpl) Subscribe(handler EventHandler) error {
+func (a *abstractTopicImpl) Subscribe(handler ...EventHandler) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	if a.closed {
 		return ErrTopicClosed
 	}
-	a.handlers = append(a.handlers, handler)
+	a.handlers = append(a.handlers, handler...)
 	return nil
 }
 

@@ -61,8 +61,8 @@ func main() {
 	//		select {
 	//		case <-stop:
 	//		default:
-	topic, _ := bus.Publish("someTopic", "Hello")
-	_ = topic.Publish("World")
+	topic, _ := bus.Publish("someTopic", "Hello", "World")
+	_ = topic.Publish("Another Message")
 	//}
 	//
 	//}
