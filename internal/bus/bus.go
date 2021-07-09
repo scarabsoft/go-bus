@@ -90,7 +90,7 @@ func (b *busImpl) DeleteTopic(name string) {
 }
 
 // sets the default topic builder
-func (b *busImpl) CreateTopicIfNotExists(tb topic.Builder) {
+func (b *busImpl) SetDefaultTopicBuilder(tb topic.Builder) {
 	b.defaultTopicBuilder = tb
 }
 

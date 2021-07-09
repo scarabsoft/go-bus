@@ -77,7 +77,7 @@ func Get(name string) (topic.Topic, error) {
 }
 
 func CreateTopicIfNotExists(tb topic.Builder) {
-	std.CreateTopicIfNotExists(tb)
+	std.SetDefaultTopicBuilder(tb)
 }
 
 type TopicBuilder interface {

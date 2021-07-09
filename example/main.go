@@ -38,7 +38,7 @@ func main() {
 	//	fmt.Println("FALSE")
 	//}
 
-	//bus.CreateTopicIfNotExists(bus.SyncTopic)
+	//bus.SetDefaultTopicBuilder(bus.SyncTopic)
 	topic, _ := bus.CreateTopic("topic", bus.SyncTopic)
 
 	//bus.CreateTopic("topic-2", bus.WorkerTopic)
