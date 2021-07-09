@@ -5,20 +5,20 @@ import (
 	"sync/atomic"
 )
 
-func NewTopicInit(name string) *TopicInit {
-	return &TopicInit{Name: name}
+func NewTopicInit(name string) *RootBuilder {
+	return &RootBuilder{Name: name}
 }
 
-func (tbs *TopicInit) Sync() TopicBuilder {
-	return NewSyncTopicBuilder(tbs.Name)
+func (r *RootBuilder) Sync() Builder {
+	return NewSyncBuilder(r.Name)
 }
 
-func (tbs *TopicInit) Async() TopicBuilder {
-	return NewAsyncTopicBuilder(tbs.Name)
+func (r *RootBuilder) Async() Builder {
+	return NewAsyncBuilder(r.Name)
 }
 
-type TopicBuilder interface {
-	Build() Topic
+func (r *RootBuilder) AsyncWorker() Builder {
+	return NewWorkerBuilder(r.Name)
 }
 
 type abstractTopicImpl struct {

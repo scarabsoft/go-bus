@@ -15,7 +15,7 @@ type Bus interface {
 
 	//Unsubscribe(handler event.EventHandler) error
 
-	CreateTopic(name string, fn func(topic topic.TopicInit) topic.TopicBuilder) (topic.Topic, error)
+	CreateTopic(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error)
 }
 
 type busImpl struct {
@@ -43,7 +43,7 @@ func (b *busImpl) Publish(topic string, payloads ...interface{}) (topic.Topic, e
 }
 
 //FIXME should be method which accepts builder instead of options
-func (b *busImpl) CreateTopic(name string, fn func(topic topic.TopicInit) topic.TopicBuilder) (topic.Topic, error) {
+func (b *busImpl) CreateTopic(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 

@@ -14,6 +14,10 @@ type Topic interface {
 	Close() error
 }
 
-type TopicInit struct {
+type RootBuilder struct {
 	Name string
+}
+
+type Builder interface {
+	Build() Topic
 }

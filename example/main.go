@@ -18,8 +18,20 @@ import (
 //	return nil
 //}
 
+type CustomEvent bus.Event
+
+func (c CustomEvent) String() string {
+	return fmt.Sprintf("custom event %d", c.ID)
+}
+
+func (c CustomEvent) Test() string {
+	return c.Payload.(string)
+}
+
 func main() {
-	topic, _ := bus.CreateTopic("topic", bus.AsyncTopic)
+	//topic, _ := bus.CreateTopic("topic", bus.AsyncTopic)
+	//topic, _ := bus.CreateTopic("topic", bus.SyncTopic)
+	topic, _ := bus.CreateTopic("topic", bus.WorkerTopic)
 
 	//err := topic.Subscribe(func(event bus.Event) {
 	err := topic.Subscribe(func(ID uint64, topic string, payload interface{}) {
@@ -34,12 +46,20 @@ func main() {
 		//fmt.Println(event)
 	})
 
-	//err = topic.Subscribe(bus.EventHandler(func(event bus.Event) {
-	//	fmt.Println(event.ID, event.Topic, event.Payload)
-	//	fmt.Println(event)
-	//}))
+	err = topic.Subscribe(bus.EventHandler(func(event bus.Event) {
+		switch event.Topic {
+		case "topic":
+			var c = CustomEvent(event)
+			fmt.Println(c)
+			fmt.Println(c.Test())
+		default:
+			fmt.Println(event)
+		}
+	}))
 
-	err = topic.Publish("HaHaHa")
+	for i := 0; i < 100; i++ {
+		err = topic.Publish("HaHaHa")
+	}
 	topic.Close()
 	time.Sleep(1 * time.Second)
 	fmt.Println(err)

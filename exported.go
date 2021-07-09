@@ -24,12 +24,16 @@ func EventHandler(handler func(event Event)) func(ID uint64, name string, payloa
 var (
 	std = bus.NewBus()
 
-	SyncTopic = func(t topic.TopicInit) topic.TopicBuilder {
-		return topic.NewSyncTopicBuilder(t.Name)
+	SyncTopic = func(t topic.RootBuilder) topic.Builder {
+		return topic.NewSyncBuilder(t.Name)
 	}
 
-	AsyncTopic = func(t topic.TopicInit) topic.TopicBuilder {
-		return topic.NewAsyncTopicBuilder(t.Name)
+	AsyncTopic = func(t topic.RootBuilder) topic.Builder {
+		return topic.NewAsyncBuilder(t.Name)
+	}
+
+	WorkerTopic = func(t topic.RootBuilder) topic.Builder {
+		return topic.NewWorkerBuilder(t.Name)
 	}
 )
 
@@ -41,6 +45,6 @@ func Publish(topic string, payloads ...interface{}) (topic.Topic, error) {
 	return std.Publish(topic, payloads...)
 }
 
-func CreateTopic(name string, fn func(t topic.TopicInit) topic.TopicBuilder) (topic.Topic, error) {
+func CreateTopic(name string, fn func(t topic.RootBuilder) topic.Builder) (topic.Topic, error) {
 	return std.CreateTopic(name, fn)
 }

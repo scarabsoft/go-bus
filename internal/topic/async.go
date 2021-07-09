@@ -5,17 +5,15 @@ type asyncTopicImpl struct {
 }
 
 func (a *asyncTopicImpl) Publish(payloads ...interface{}) error {
-
+	a.lock.RLock()
 	if err := a.abstractTopicImpl.Publish(payloads); err != nil {
 		return err
 	}
 
 	go func() {
-		a.lock.RLock()
 		defer a.lock.RUnlock()
 
 		for _, payload := range payloads {
-			//e := event.New(a.generateID, a.topic, payload)
 			id := a.generateID()
 			for _, handler := range a.handlers {
 				handler(id, a.topic, payload)
@@ -29,7 +27,7 @@ type asyncTopicBuilder struct {
 	topic asyncTopicImpl
 }
 
-func NewAsyncTopicBuilder(name string) *asyncTopicBuilder {
+func NewAsyncBuilder(name string) *asyncTopicBuilder {
 	return &asyncTopicBuilder{topic: asyncTopicImpl{
 		abstractTopicImpl: newAbstractTopicImpl(name),
 	}}

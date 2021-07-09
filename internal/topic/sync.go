@@ -13,7 +13,6 @@ func (s *syncTopicImpl) Publish(payloads ...interface{}) error {
 	defer s.lock.RUnlock()
 
 	for _, payload := range payloads {
-		//evt := event.New(s.generateID, s.topic, payload)
 		id := s.generateID()
 		for _, handler := range s.handlers {
 			handler(id, s.topic, payload)
@@ -26,7 +25,7 @@ type syncTopicBuilder struct {
 	topic syncTopicImpl
 }
 
-func NewSyncTopicBuilder(name string) *syncTopicBuilder {
+func NewSyncBuilder(name string) *syncTopicBuilder {
 	return &syncTopicBuilder{topic: syncTopicImpl{
 		abstractTopicImpl: newAbstractTopicImpl(name),
 	}}
