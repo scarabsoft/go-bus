@@ -30,29 +30,27 @@ func (w *workerTopicImpl) Publish(payloads ...interface{}) error {
 	return nil
 }
 
-
-
-type WorkerTopicBuilder struct {
+type workerTopicBuilderImpl struct {
 	topic workerTopicImpl
 }
 
-func NewWorkerBuilder(defaultPool pool.Pool) *WorkerTopicBuilder {
-	return &WorkerTopicBuilder{topic: workerTopicImpl{
+func NewWorkerBuilder(defaultPool pool.Pool) *workerTopicBuilderImpl {
+	return &workerTopicBuilderImpl{topic: workerTopicImpl{
 		abstractTopicImpl: newAbstractTopicImpl(),
 		pool:              defaultPool,
 	}}
 }
 
-func (wtb *WorkerTopicBuilder) Name(name string) Builder {
+func (wtb *workerTopicBuilderImpl) Name(name string) Builder {
 	wtb.topic.name = name
 	return wtb
 }
 
-func (wtb *WorkerTopicBuilder) Pool(p pool.Pool) *WorkerTopicBuilder {
+func (wtb *workerTopicBuilderImpl) Pool(p pool.Pool) *workerTopicBuilderImpl {
 	wtb.topic.pool = p
 	return wtb
 }
 
-func (wtb *WorkerTopicBuilder) Build() Topic {
+func (wtb *workerTopicBuilderImpl) Build() Topic {
 	return &wtb.topic
 }

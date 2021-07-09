@@ -25,7 +25,7 @@ func EventHandler(handler func(event Event)) func(ID uint64, name string, payloa
 }
 
 var (
-	std = bus.NewBus()
+	std = bus.New()
 
 	defaultAsyncPoolOnce           = sync.Once{}
 	defaultAsyncPool     pool.Pool = nil
@@ -42,7 +42,7 @@ var (
 
 func DefaultAsyncPool() pool.Pool {
 	defaultAsyncPoolOnce.Do(func() {
-		defaultAsyncPool = pool.NewPool(pool.Options{
+		defaultAsyncPool = pool.New(pool.Options{
 			MaxQueueSize: 1,
 			MaxWorkers:   1,
 		})
@@ -52,7 +52,7 @@ func DefaultAsyncPool() pool.Pool {
 
 func DefaultWorkerPool() pool.Pool {
 	defaultWorkerPoolOnce.Do(func() {
-		defaultWorkerPool = pool.NewPool(pool.Options{
+		defaultWorkerPool = pool.New(pool.Options{
 			MaxQueueSize: 100,
 			MaxWorkers:   runtime.NumCPU(),
 		})

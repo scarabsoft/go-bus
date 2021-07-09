@@ -2,22 +2,22 @@ package topic
 
 import "github.com/scarabsoft/go-bus/internal/pool"
 
-type AsyncTopicBuilder struct {
+type asyncTopicBuilderImpl struct {
 	topic workerTopicImpl
 }
 
-func NewAsyncBuilder(defaultPool pool.Pool) *AsyncTopicBuilder {
-	return &AsyncTopicBuilder{topic: workerTopicImpl{
+func NewAsyncBuilder(defaultPool pool.Pool) *asyncTopicBuilderImpl {
+	return &asyncTopicBuilderImpl{topic: workerTopicImpl{
 		abstractTopicImpl: newAbstractTopicImpl(),
 		pool:              defaultPool,
 	}}
 }
 
-func (wtb *AsyncTopicBuilder) Name(name string) Builder {
+func (wtb *asyncTopicBuilderImpl) Name(name string) Builder {
 	wtb.topic.name = name
 	return wtb
 }
 
-func (wtb *AsyncTopicBuilder) Build() Topic {
+func (wtb *asyncTopicBuilderImpl) Build() Topic {
 	return &wtb.topic
 }

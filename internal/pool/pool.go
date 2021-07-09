@@ -1,35 +1,8 @@
 package pool
 
 import (
-	"errors"
 	"sync"
 )
-
-var (
-	ErrPoolIsClosed = errors.New("pool is closed")
-)
-
-type TaskPayload struct {
-	ID      uint64
-	Name    string
-	Payload interface{}
-}
-
-type Task struct {
-	Payload TaskPayload
-	Handler func(ID uint64, name string, payload interface{})
-}
-
-type Pool interface {
-	Submit(Task) error
-
-	Close() error
-}
-
-type Options struct {
-	MaxWorkers   int
-	MaxQueueSize int
-}
 
 type poolImpl struct {
 	options Options
@@ -74,7 +47,7 @@ func (p *poolImpl) Close() error {
 	return nil
 }
 
-func NewPool(options Options) Pool {
+func New(options Options) Pool {
 	result := &poolImpl{
 		options: options,
 		queue:   make(chan Task, options.MaxQueueSize),

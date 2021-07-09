@@ -12,17 +12,14 @@ var (
 
 type Topic interface {
 	Name() string
-	//FIXME options map[string]interface{} ?
 	Publish(payloads ...interface{}) error
 	Subscribe(handlers ...func(ID uint64, topic string, payload interface{})) error
 	Close() error
-}
-
-type RootBuilder struct {
-	Name string
 }
 
 type Builder interface {
 	Name(name string) Builder
 	Build() Topic
 }
+
+

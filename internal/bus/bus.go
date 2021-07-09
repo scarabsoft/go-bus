@@ -6,12 +6,12 @@ import (
 )
 
 type busImpl struct {
-	topics map[string]topic.Topic
-	lock   sync.RWMutex
-
+	topics              map[string]topic.Topic
+	lock                sync.RWMutex
 	defaultTopicBuilder topic.Builder
 }
 
+// returns the topic, if not present and a default topic builder was set, it tries to create a new topic
 func (b *busImpl) Get(name string) (topic.Topic, error) {
 	return b.getOrCreateEventually(name, b.defaultTopicBuilder)
 }
@@ -69,15 +69,17 @@ func (b *busImpl) getOrCreateEventually(name string, tb topic.Builder) (topic.To
 	}
 }
 
+// creates and registers a new topic
 func (b *busImpl) CreateTopic(name string, tb topic.Builder) (topic.Topic, error) {
 	return b.getOrCreateEventually(name, tb)
 }
 
+// sets the default topic builder
 func (b *busImpl) CreateTopicIfNotExists(tb topic.Builder) {
 	b.defaultTopicBuilder = tb
 }
 
-func NewBus() *busImpl {
+func New() *busImpl {
 	return &busImpl{
 		topics:              make(map[string]topic.Topic),
 		lock:                sync.RWMutex{},
