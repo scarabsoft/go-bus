@@ -5,19 +5,19 @@ import (
 	"sync/atomic"
 )
 
-func NewTopicInit(name string) *RootBuilder {
-	return &RootBuilder{Name: name}
+func NewTopicInit(name string) RootBuilder {
+	return RootBuilder{Name: name}
 }
 
-func (r *RootBuilder) Sync() Builder {
+func (r RootBuilder) Sync() Builder {
 	return NewSyncBuilder(r.Name)
 }
 
-func (r *RootBuilder) Async() Builder {
+func (r RootBuilder) Async() Builder {
 	return NewAsyncBuilder(r.Name)
 }
 
-func (r *RootBuilder) AsyncWorker() Builder {
+func (r RootBuilder) AsyncWorker() Builder {
 	return NewWorkerBuilder(r.Name)
 }
 

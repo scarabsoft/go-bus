@@ -4,7 +4,11 @@ import (
 	"errors"
 )
 
-var ErrAlreadyClosed = errors.New("topic already closed")
+var (
+	ErrDoesNotExists = errors.New("topic does not exists")
+	ErrAlreadyExists = errors.New("topic already exists")
+	ErrAlreadyClosed = errors.New("topic already closed")
+)
 
 type Topic interface {
 	Name() string

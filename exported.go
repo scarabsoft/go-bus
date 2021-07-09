@@ -37,14 +37,22 @@ var (
 	}
 )
 
-func Get(topic string) topic.Topic {
-	return std.Get(topic)
+func Publish(topic string, payloads ...interface{}) error {
+	return std.Publish(topic, payloads...)
 }
 
-func Publish(topic string, payloads ...interface{}) (topic.Topic, error) {
-	return std.Publish(topic, payloads...)
+func Subscribe(name string, handlers ...func(ID uint64, name string, payload interface{})) error {
+	return std.Subscribe(name, handlers...)
 }
 
 func CreateTopic(name string, fn func(t topic.RootBuilder) topic.Builder) (topic.Topic, error) {
 	return std.CreateTopic(name, fn)
+}
+
+func Get(name string) (topic.Topic, error) {
+	return std.Get(name)
+}
+
+func CreateTopicIfNotExists(fn func(t topic.RootBuilder) topic.Builder) {
+	std.CreateTopicIfNotExists(fn)
 }

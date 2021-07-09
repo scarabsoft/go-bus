@@ -1,71 +1,98 @@
 package bus
 
 import (
-	"fmt"
 	"github.com/scarabsoft/go-bus/internal/topic"
 	"sync"
 )
 
 type Bus interface {
-	Get(topic string) topic.Topic
+	Publish(name string, payloads ...interface{}) error
 
-	Publish(topic string, payloads ...interface{}) (topic.Topic, error)
-	//
-	//Subscribe(topic string, handler ...event.EventHandler) error
+	Subscribe(name string, handlers ...func(ID uint64, name string, payload interface{})) error
 
 	//Unsubscribe(handler event.EventHandler) error
 
 	CreateTopic(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error)
+
+	Get(name string) (topic.Topic, error)
 }
 
 type busImpl struct {
 	topics map[string]topic.Topic
 	lock   sync.RWMutex
 
-	// FIXME optional topic creation if missing
-	// FIXME set default topic options
+	defaultTopicBuilder func(t topic.RootBuilder) topic.Builder
 }
 
-func (b *busImpl) Get(topic string) topic.Topic {
-	b.lock.RLock()
-	defer b.lock.RUnlock()
-
-	return b.topics[topic]
+func (b *busImpl) Get(name string) (topic.Topic, error) {
+	return b.getOrCreateEventually(name, b.defaultTopicBuilder)
 }
 
-func (b *busImpl) Publish(topic string, payloads ...interface{}) (topic.Topic, error) {
-	//FIXME if topic does not exist create default one and publish
-	t := b.Get(topic)
-	if err := t.Publish(payloads...); err != nil {
-		return nil, err
+func (b *busImpl) Publish(name string, payloads ...interface{}) error {
+	var t topic.Topic
+	var err error
+
+	if t, err = b.getOrCreateEventually(name, b.defaultTopicBuilder); err != nil {
+		return err
 	}
-	return t, nil
+
+	if err := t.Publish(payloads...); err != nil {
+		return err
+	}
+	return nil
 }
 
-//FIXME should be method which accepts builder instead of options
+func (b *busImpl) Subscribe(name string, handlers ...func(ID uint64, name string, payload interface{})) error {
+	var t topic.Topic
+	var err error
+
+	if t, err = b.getOrCreateEventually(name, b.defaultTopicBuilder); err != nil {
+		return err
+	}
+
+	if err := t.Subscribe(handlers...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *busImpl) getOrCreateEventually(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error) {
+	b.lock.RLock()
+	if t, ok := b.topics[name]; !ok {
+		b.lock.RUnlock()
+		if fn != nil {
+
+			b.lock.Lock()
+			defer b.lock.Unlock()
+
+			// this makes sure that we dont overwrite an existing topic
+			if _, ok := b.topics[name]; ok {
+				return nil, topic.ErrAlreadyExists
+			}
+
+			t = fn(topic.NewTopicInit(name)).Build()
+			b.topics[name] = t
+			return t, nil
+		}
+		return nil, topic.ErrDoesNotExists
+	} else {
+		b.lock.RUnlock()
+		return t, nil
+	}
+}
+
 func (b *busImpl) CreateTopic(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error) {
-	b.lock.Lock()
-	defer b.lock.Unlock()
-
-	fmt.Println("Create Topic")
-	// FIXME make it thread safe
-	// FIXME check whether topic already exists, if so --> error
-	// FIXME add topic
-
-	//result := syncTopicImpl{name: name, handlers: []event.EventHandler{}}
-	//result := topic.asyncTopicImpl{name: name, handlers: []event.EventHandler{}}
-	//result := newAsyncTopic(name)
-
-	result := fn(*topic.NewTopicInit(name)).Build()
-	fmt.Println(result)
-
-	b.topics[name] = result
-	return result, nil
+	return b.getOrCreateEventually(name, fn)
 }
 
-func NewBus() Bus {
+func (b *busImpl) CreateTopicIfNotExists(fn func(t topic.RootBuilder) topic.Builder) {
+	b.defaultTopicBuilder = fn
+}
+
+func NewBus() *busImpl {
 	return &busImpl{
-		topics: make(map[string]topic.Topic),
-		lock:   sync.RWMutex{},
+		topics:              make(map[string]topic.Topic),
+		lock:                sync.RWMutex{},
+		defaultTopicBuilder: nil,
 	}
 }
