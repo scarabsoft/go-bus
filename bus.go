@@ -14,7 +14,7 @@ type Bus interface {
 
 	//Unsubscribe(handler event.EventHandler) error
 
-	CreateTopic(name string) (Topic, error)
+	CreateTopic(name string, fn func(topic *TopicBuilder) Topic) (Topic, error)
 }
 
 type busImpl struct {
@@ -41,8 +41,16 @@ func (b *busImpl) Publish(topic string, data interface{}) (Topic, error) {
 	return t, nil
 }
 
+var SyncTopic = func(topic *TopicBuilder) Topic {
+	return topic.Sync().Build()
+}
+
+//var AsyncTopic = func(topic *TopicBuilder) Topic {
+//	return topic.Async().Build()
+//}
+
 //FIXME should be method which accepts builder instead of options
-func (b *busImpl) CreateTopic(name string) (Topic, error) {
+func (b *busImpl) CreateTopic(name string, fn func(topic *TopicBuilder) Topic) (Topic, error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
@@ -53,7 +61,9 @@ func (b *busImpl) CreateTopic(name string) (Topic, error) {
 
 	//result := syncTopic{name: name, handlers: []event.EventHandler{}}
 	//result := topic.asyncTopic{name: name, handlers: []event.EventHandler{}}
-	result := newAsyncTopic(name)
+	//result := newAsyncTopic(name)
+
+	result := fn(&TopicBuilder{name: name})
 	fmt.Println(result)
 
 	b.topics[name] = result

@@ -27,3 +27,9 @@ func (a *asyncTopic) Publish(data interface{}) error {
 	}()
 	return nil
 }
+
+//type AsyncTopicBuilder struct{}
+//
+//func (atb* AsyncTopicBuilder) Build() Topic{
+//	return newAsyncTopic()
+//}

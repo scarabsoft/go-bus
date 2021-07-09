@@ -9,10 +9,24 @@ import (
 var ErrTopicClosed = errors.New("topic already closed")
 
 type Topic interface {
+	Name() string
+	//FIXME Options map[string]interface{} ?
 	Publish(data interface{}) error       // FIXME better would be ...interface{}
 	Subscribe(handler EventHandler) error // FIXME better would be ...event.EventHandler
 	Close() error
 }
+
+type TopicBuilder struct {
+	name string
+}
+
+func (tb *TopicBuilder) Sync() *SyncTopicBuilder {
+	return newSyncTopicBuilder(tb.name)
+}
+
+//func (tb *TopicBuilder) Async() *AsyncTopicBuilder {
+//	return &AsyncTopicBuilder{}
+//}
 
 type abstractTopicImpl struct {
 	name        string
@@ -32,6 +46,21 @@ func newAbstractTopicImpl(name string) abstractTopicImpl {
 	}
 }
 
+func (a *abstractTopicImpl) Name() string {
+	return a.name
+}
+
+func (a *abstractTopicImpl) Publish(data interface{}) error {
+	a.lock.RLock()
+	defer a.lock.RUnlock()
+
+	if a.closed {
+		return ErrTopicClosed
+	}
+
+	return nil
+}
+
 func (a *abstractTopicImpl) Subscribe(handler EventHandler) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
@@ -44,6 +73,9 @@ func (a *abstractTopicImpl) Subscribe(handler EventHandler) error {
 }
 
 func (a *abstractTopicImpl) Close() error {
+	a.lock.Lock()
+	defer a.lock.Unlock()
+	a.closed = true
 	return nil
 }
 

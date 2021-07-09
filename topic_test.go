@@ -15,7 +15,7 @@ func TestTopicIdGenerator(t *testing.T) {
 	testInstance := topicIdGenerator()
 
 	iterations := 1000
-	parallel := 1000
+	parallel := 100
 	waiter := sync.WaitGroup{}
 	dataMutex := sync.Mutex{}
 	data := make(map[uint64]struct{})

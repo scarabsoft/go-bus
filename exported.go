@@ -12,6 +12,6 @@ func Publish(topic string, data interface{}) (Topic, error) {
 	return std.Publish(topic, data)
 }
 
-func CreateTopic(name string) (Topic, error) {
-	return std.CreateTopic(name)
+func CreateTopic(name string, fn func(topic *TopicBuilder) Topic) (Topic, error) {
+	return std.CreateTopic(name, fn)
 }

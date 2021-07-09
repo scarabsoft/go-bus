@@ -30,8 +30,22 @@ import (
 
 func main() {
 
-	_, _ = bus.CreateTopic("someTopic")
+	tb := bus.TopicBuilder{}
+
+	tb.Sync()
+
+	//_, _ = bus.CreateTopic("someTopic", func(topic *bus.TopicBuilder) bus.Topic {
+	//	return topic.SyncTopic()
+	//})
+
+	//_, _ = bus.CreateTopic("someTopic", func(topic *bus.TopicBuilder) bus.Topic {
+	//	return topic.SyncTopic().Build()
+	//})
+
+	_, _ = bus.CreateTopic("someTopic", bus.SyncTopic)
+
 	t := bus.Get("someTopic")
+	fmt.Println(t.Name())
 
 	handler := func(event bus.Event) error {
 		fmt.Println("Handle:", event.ID, event.Topic, event.Payload)
@@ -47,8 +61,8 @@ func main() {
 	//		select {
 	//		case <-stop:
 	//		default:
-	_, _ = bus.Publish("someTopic", "Hello")
-	_ = t.Publish("World")
+	topic, _ := bus.Publish("someTopic", "Hello")
+	_ = topic.Publish("World")
 	//}
 	//
 	//}
@@ -60,4 +74,6 @@ func main() {
 	//stop <- struct{}{}
 
 	fmt.Println(t)
+
+	t.Close()
 }
