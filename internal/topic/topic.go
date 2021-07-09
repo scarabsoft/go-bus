@@ -34,7 +34,16 @@ func (a *abstractTopicImpl) Subscribe(handlers ...func(ID uint64, name string, p
 	if a.closed {
 		return ErrAlreadyClosed
 	}
-	a.handlers = append(a.handlers, handlers...)
+
+	for _, handler := range handlers {
+		for _, currentHandler := range a.handlers {
+			if reflect.ValueOf(currentHandler) == reflect.ValueOf(handler) {
+				return ErrAlreadySubscribed
+			}
+		}
+		a.handlers = append(a.handlers, handler)
+	}
+
 	return nil
 }
 

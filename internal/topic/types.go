@@ -5,9 +5,10 @@ import (
 )
 
 var (
-	ErrDoesNotExists = errors.New("topic does not exists")
-	ErrAlreadyExists = errors.New("topic already exists")
-	ErrAlreadyClosed = errors.New("topic already closed")
+	ErrDoesNotExists     = errors.New("topic does not exists")
+	ErrAlreadyExists     = errors.New("topic already exists")
+	ErrAlreadyClosed     = errors.New("topic already closed")
+	ErrAlreadySubscribed = errors.New("handler already subscribed to topic")
 )
 
 type Topic interface {

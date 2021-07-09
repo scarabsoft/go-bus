@@ -8,6 +8,11 @@ import (
 	"testing"
 )
 
+var (
+	givenHandler   = func(ID uint64, name string, payload interface{}) {}
+	anotherHandler = func(ID uint64, name string, payload interface{}) {}
+)
+
 func TestTopicIdGenerator(t *testing.T) {
 	t.Parallel()
 	assert := hamcrest.NewAssertion(t)
@@ -47,8 +52,6 @@ func TestTopicIdGenerator(t *testing.T) {
 }
 
 func TestAbstractTopicImpl_Unsubscribe(t *testing.T) {
-	givenHandler := func(ID uint64, name string, payload interface{}) {}
-	anotherHandler := func(ID uint64, name string, payload interface{}) {}
 
 	t.Run("Unsubscribe from already closed topic", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
@@ -58,7 +61,7 @@ func TestAbstractTopicImpl_Unsubscribe(t *testing.T) {
 
 		err := testInstance.Unsubscribe(givenHandler)
 		assert.That(err, is.NotNil())
-		assert.That(err.Error(), is.EqualTo("topic already closed"))
+		assert.That(err, is.EqualTo(ErrAlreadyClosed))
 	})
 
 	t.Run("Unsubscribe from empty topic", func(t *testing.T) {
@@ -124,9 +127,62 @@ func TestAbstractTopicImpl_New(t *testing.T) {
 	assert := hamcrest.NewAssertion(t)
 
 	testInstance := newAbstractTopicImpl()
-	
+
 	assert.That(testInstance.closed, is.False())
 	assert.That(testInstance.generateID, is.NotNil())
 	assert.That(testInstance.generateID(), is.EqualTo(uint64(1)))
 	assert.That(testInstance.handlers, is.Empty())
+}
+
+func TestAbstractTopicImpl_Subscribe(t *testing.T) {
+	t.Run("Subscribe to closed topic", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+		testInstance.closed = true
+
+		err := testInstance.Subscribe(givenHandler)
+		assert.That(err, is.NotNil())
+		assert.That(err, is.EqualTo(ErrAlreadyClosed))
+
+		assert.That(testInstance.handlers, is.Empty())
+	})
+
+	t.Run("Subscribe to topic", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+
+		err := testInstance.Subscribe(givenHandler)
+		assert.That(err, is.Nil())
+
+		assert.That(testInstance.handlers, has.Length(1))
+		assert.That(testInstance.handlers, has.Item(givenHandler))
+	})
+
+	t.Run("Subscribe them all to topic", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+
+		err := testInstance.Subscribe(givenHandler, anotherHandler)
+		assert.That(err, is.Nil())
+
+		assert.That(testInstance.handlers, has.Length(2))
+		assert.That(testInstance.handlers, has.Items(givenHandler, anotherHandler))
+	})
+
+	t.Run("Subscribe twice and stop execution", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := newAbstractTopicImpl()
+
+		_ = testInstance.Subscribe(givenHandler)
+		err := testInstance.Subscribe(givenHandler, anotherHandler)
+		assert.That(err, is.NotNil())
+		assert.That(err, is.EqualTo(ErrAlreadySubscribed))
+
+		assert.That(testInstance.handlers, has.Length(1))
+		assert.That(testInstance.handlers, has.Item(givenHandler))
+	})
 }
