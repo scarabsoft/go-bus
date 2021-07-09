@@ -5,25 +5,11 @@ import (
 	"sync"
 )
 
-type Bus interface {
-	Publish(name string, payloads ...interface{}) error
-
-	Subscribe(name string, handlers ...func(ID uint64, name string, payload interface{})) error
-
-	//Unsubscribe(name string, handler event.EventHandler) error
-
-	CreateTopic(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error)
-
-	Get(name string) (topic.Topic, error)
-
-	//DeleteTopic(name string)
-}
-
 type busImpl struct {
 	topics map[string]topic.Topic
 	lock   sync.RWMutex
 
-	defaultTopicBuilder func(t topic.RootBuilder) topic.Builder
+	defaultTopicBuilder topic.Builder
 }
 
 func (b *busImpl) Get(name string) (topic.Topic, error) {
@@ -58,10 +44,10 @@ func (b *busImpl) Subscribe(name string, handlers ...func(ID uint64, name string
 	return nil
 }
 
-func (b *busImpl) getOrCreateEventually(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error) {
+func (b *busImpl) getOrCreateEventually(name string, tb topic.Builder) (topic.Topic, error) {
 	b.lock.RLock()
 	if t, ok := b.topics[name]; !ok {
-		if fn != nil {
+		if tb != nil {
 			b.lock.RUnlock()
 			b.lock.Lock()
 			defer b.lock.Unlock()
@@ -71,7 +57,7 @@ func (b *busImpl) getOrCreateEventually(name string, fn func(topic topic.RootBui
 				return nil, topic.ErrAlreadyExists
 			}
 
-			t = fn(topic.NewTopicInit(name)).Build()
+			t = tb.Name(name).Build()
 			b.topics[name] = t
 			return t, nil
 		}
@@ -83,12 +69,12 @@ func (b *busImpl) getOrCreateEventually(name string, fn func(topic topic.RootBui
 	}
 }
 
-func (b *busImpl) CreateTopic(name string, fn func(topic topic.RootBuilder) topic.Builder) (topic.Topic, error) {
-	return b.getOrCreateEventually(name, fn)
+func (b *busImpl) CreateTopic(name string, tb topic.Builder) (topic.Topic, error) {
+	return b.getOrCreateEventually(name, tb)
 }
 
-func (b *busImpl) CreateTopicIfNotExists(fn func(t topic.RootBuilder) topic.Builder) {
-	b.defaultTopicBuilder = fn
+func (b *busImpl) CreateTopicIfNotExists(tb topic.Builder) {
+	b.defaultTopicBuilder = tb
 }
 
 func NewBus() *busImpl {

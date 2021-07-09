@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	ErrPoolIsDone = errors.New("pool is done")
+	ErrPoolIsClosed = errors.New("pool is closed")
 )
 
 type TaskPayload struct {
@@ -23,9 +23,7 @@ type Task struct {
 type Pool interface {
 	Submit(Task) error
 
-	Start()
-
-	Stop()
+	Close() error
 }
 
 type Options struct {
@@ -34,31 +32,31 @@ type Options struct {
 }
 
 type poolImpl struct {
-	Options Options
-	Queue   chan Task
-	Done    bool
+	options Options
+	queue   chan Task
+	closed  bool
 
 	wg   sync.WaitGroup
 	stop chan struct{}
 }
 
 func (p *poolImpl) Submit(job Task) error {
-	if p.Done {
-		return ErrPoolIsDone
+	if p.closed {
+		return ErrPoolIsClosed
 	}
-	p.Queue <- job
+	p.queue <- job
 	return nil
 }
 
-func (p *poolImpl) Start() {
-	for i := 0; i < p.Options.MaxWorkers; i++ {
+func (p *poolImpl) start() {
+	for i := 0; i < p.options.MaxWorkers; i++ {
 		p.wg.Add(1)
 		go func() {
 			for {
 				select {
 				case <-p.stop:
 					p.wg.Done()
-				case j := <-p.Queue:
+				case j := <-p.queue:
 					p := j.Payload
 					j.Handler(p.ID, p.Name, p.Payload)
 				}
@@ -67,20 +65,23 @@ func (p *poolImpl) Start() {
 	}
 }
 
-func (p *poolImpl) Stop() {
-	for i := 0; i < p.Options.MaxWorkers; i++ {
+func (p *poolImpl) Close() error {
+	for i := 0; i < p.options.MaxWorkers; i++ {
 		p.stop <- struct{}{}
 	}
 	p.wg.Wait()
-	p.Done = true
+	p.closed = true
+	return nil
 }
 
 func NewPool(options Options) Pool {
-	return &poolImpl{
-		Options: options,
-		Queue:   make(chan Task, options.MaxQueueSize),
-		Done:    false,
+	result := &poolImpl{
+		options: options,
+		queue:   make(chan Task, options.MaxQueueSize),
+		closed:  false,
 		wg:      sync.WaitGroup{},
 		stop:    make(chan struct{}, options.MaxQueueSize),
 	}
+	result.start()
+	return result
 }

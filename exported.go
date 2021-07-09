@@ -3,7 +3,10 @@ package bus
 import (
 	"fmt"
 	"github.com/scarabsoft/go-bus/internal/bus"
+	"github.com/scarabsoft/go-bus/internal/pool"
 	"github.com/scarabsoft/go-bus/internal/topic"
+	"runtime"
+	"sync"
 )
 
 type Event struct {
@@ -24,18 +27,38 @@ func EventHandler(handler func(event Event)) func(ID uint64, name string, payloa
 var (
 	std = bus.NewBus()
 
-	SyncTopic = func(t topic.RootBuilder) topic.Builder {
-		return topic.NewSyncBuilder(t.Name)
-	}
+	defaultAsyncPoolOnce           = sync.Once{}
+	defaultAsyncPool     pool.Pool = nil
 
-	AsyncTopic = func(t topic.RootBuilder) topic.Builder {
-		return topic.NewAsyncBuilder(t.Name)
-	}
+	defaultWorkerPoolOnce           = sync.Once{}
+	defaultWorkerPool     pool.Pool = nil
 
-	WorkerTopic = func(t topic.RootBuilder) topic.Builder {
-		return topic.NewWorkerBuilder(t.Name)
-	}
+	SyncTopic = &SyncTopicBuilder{}
+
+	AsyncTopic = NewAsyncTopicBuilder()
+
+	WorkerTopic = NewWorkerTopicBuilder()
 )
+
+func DefaultAsyncPool() pool.Pool {
+	defaultAsyncPoolOnce.Do(func() {
+		defaultAsyncPool = pool.NewPool(pool.Options{
+			MaxQueueSize: 1,
+			MaxWorkers:   1,
+		})
+	})
+	return defaultAsyncPool
+}
+
+func DefaultWorkerPool() pool.Pool {
+	defaultWorkerPoolOnce.Do(func() {
+		defaultWorkerPool = pool.NewPool(pool.Options{
+			MaxQueueSize: 100,
+			MaxWorkers:   runtime.NumCPU(),
+		})
+	})
+	return defaultWorkerPool
+}
 
 func Publish(topic string, payloads ...interface{}) error {
 	return std.Publish(topic, payloads...)
@@ -45,14 +68,49 @@ func Subscribe(name string, handlers ...func(ID uint64, name string, payload int
 	return std.Subscribe(name, handlers...)
 }
 
-func CreateTopic(name string, fn func(t topic.RootBuilder) topic.Builder) (topic.Topic, error) {
-	return std.CreateTopic(name, fn)
+func CreateTopic(name string, tb TopicBuilder) (topic.Topic, error) {
+	return std.CreateTopic(name, tb.Build())
 }
 
 func Get(name string) (topic.Topic, error) {
 	return std.Get(name)
 }
 
-func CreateTopicIfNotExists(fn func(t topic.RootBuilder) topic.Builder) {
-	std.CreateTopicIfNotExists(fn)
+func CreateTopicIfNotExists(tb topic.Builder) {
+	std.CreateTopicIfNotExists(tb)
+}
+
+type TopicBuilder interface {
+	Build() topic.Builder
+}
+
+type SyncTopicBuilder struct {
+}
+
+func (s SyncTopicBuilder) Build() topic.Builder {
+	return topic.NewSyncBuilder()
+}
+
+type AsyncTopicBuilder struct {
+	p pool.Pool
+}
+
+func NewAsyncTopicBuilder() *AsyncTopicBuilder {
+	return &AsyncTopicBuilder{p: DefaultAsyncPool()}
+}
+
+func (a AsyncTopicBuilder) Build() topic.Builder {
+	return topic.NewAsyncBuilder(a.p)
+}
+
+type WorkerTopicBuilder struct {
+	p pool.Pool
+}
+
+func NewWorkerTopicBuilder() *WorkerTopicBuilder {
+	return &WorkerTopicBuilder{p: DefaultWorkerPool()}
+}
+
+func (w WorkerTopicBuilder) Build() topic.Builder {
+	return topic.NewWorkerBuilder(w.p)
 }

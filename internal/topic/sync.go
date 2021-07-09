@@ -15,7 +15,7 @@ func (s *syncTopicImpl) Publish(payloads ...interface{}) error {
 	for _, payload := range payloads {
 		id := s.generateID()
 		for _, handler := range s.handlers {
-			handler(id, s.topic, payload)
+			handler(id, s.name, payload)
 		}
 	}
 	return nil
@@ -25,10 +25,15 @@ type syncTopicBuilder struct {
 	topic syncTopicImpl
 }
 
-func NewSyncBuilder(name string) *syncTopicBuilder {
+func NewSyncBuilder() *syncTopicBuilder {
 	return &syncTopicBuilder{topic: syncTopicImpl{
-		abstractTopicImpl: newAbstractTopicImpl(name),
+		abstractTopicImpl: newAbstractTopicImpl(),
 	}}
+}
+
+func (stb *syncTopicBuilder) Name(name string) Builder {
+	stb.topic.name = name
+	return stb
 }
 
 func (stb *syncTopicBuilder) Build() Topic {
