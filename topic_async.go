@@ -1,16 +1,10 @@
 package bus
 
-type asyncTopic struct {
+type asyncTopicImpl struct {
 	abstractTopicImpl
 }
 
-func newAsyncTopic(name string) Topic {
-	return &asyncTopic{
-		abstractTopicImpl: newAbstractTopicImpl(name),
-	}
-}
-
-func (a *asyncTopic) Publish(data ...interface{}) error {
+func (a *asyncTopicImpl) Publish(payloads ...interface{}) error {
 	a.lock.RLock()
 	defer a.lock.RUnlock()
 
@@ -18,20 +12,30 @@ func (a *asyncTopic) Publish(data ...interface{}) error {
 		return ErrTopicClosed
 	}
 
-	for _, d:= range data {
-		go func() {
-			//e := Event{Topic: a.name, Payload: data} // FIXME this should be a simple event generator to have auto increment ids
-			e := newEvent(a.idGenerator(), a.name, d) // FIXME this should be a simple event generator to have auto increment ids
+	go func() {
+		for _, payload := range payloads {
+			e := newEvent(a.idGenerator, a.name, payload)
 			for _, handler := range a.handlers {
 				_ = handler(e)
 			}
-		}()
-	}
+		}
+	}()
+	return nil
+}
+func (a *asyncTopicImpl) Close() error {
 	return nil
 }
 
-//type AsyncTopicBuilder struct{}
-//
-//func (atb* AsyncTopicBuilder) Build() Topic{
-//	return newAsyncTopic()
-//}
+type asyncTopicBuilder struct {
+	topic asyncTopicImpl
+}
+
+func newAsyncTopicBuilder(name string) *asyncTopicBuilder {
+	return &asyncTopicBuilder{topic: asyncTopicImpl{
+		abstractTopicImpl: newAbstractTopicImpl(name),
+	}}
+}
+
+func (atb *asyncTopicBuilder) build() Topic {
+	return &atb.topic
+}

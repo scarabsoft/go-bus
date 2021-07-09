@@ -11,22 +11,27 @@ var ErrTopicClosed = errors.New("topic already closed")
 type Topic interface {
 	Name() string
 	//FIXME Options map[string]interface{} ?
-	Publish(data ...interface{}) error
+	Publish(payloads ...interface{}) error
 	Subscribe(handlers ...EventHandler) error
 	Close() error
 }
 
-type TopicBuilder struct {
+type TopicInit struct {
 	name string
 }
 
-func (tb *TopicBuilder) Sync() *SyncTopicBuilder {
-	return newSyncTopicBuilder(tb.name)
+func (tbs *TopicInit) Sync() TopicBuilder {
+	return newSyncTopicBuilder(tbs.name)
 }
 
-//func (tb *TopicBuilder) Async() *AsyncTopicBuilder {
-//	return &AsyncTopicBuilder{}
-//}
+func (tbs *TopicInit) Async() TopicBuilder {
+	return newAsyncTopicBuilder(tbs.name)
+}
+
+type TopicBuilder interface {
+	build() Topic
+}
+
 
 type abstractTopicImpl struct {
 	name        string

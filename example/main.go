@@ -30,29 +30,39 @@ import (
 
 func main() {
 
-	tb := bus.TopicBuilder{}
+	//tb := bus.topicBuilderImpl{}
+	//
+	//tb.Sync()
 
-	tb.Sync()
-
-	//_, _ = bus.CreateTopic("someTopic", func(topic *bus.TopicBuilder) bus.Topic {
+	//_, _ = bus.CreateTopic("syncTopic", func(topic *bus.topicBuilderImpl) bus.Topic {
 	//	return topic.SyncTopic()
 	//})
 
-	//_, _ = bus.CreateTopic("someTopic", func(topic *bus.TopicBuilder) bus.Topic {
+	//_, _ = bus.CreateTopic("syncTopic", func(topic *bus.topicBuilderImpl) bus.Topic {
 	//	return topic.SyncTopic().Build()
 	//})
 
-	_, _ = bus.CreateTopic("someTopic", bus.SyncTopic)
+	_, _ = bus.CreateTopic("syncTopic", bus.SyncTopic)
 
-	t := bus.Get("someTopic")
-	fmt.Println(t.Name())
+	//_, _ = bus.CreateTopic("asyncTopic", func(topic bus.TopicInit) bus.TopicBuilder {
+	//	return topic.Async()
+	//})
+
+	_, _ = bus.CreateTopic("asyncTopic", bus.AsyncTopic)
+
+	syncTopic := bus.Get("syncTopic")
+	fmt.Println(syncTopic.Name())
+	
+	asyncTopic := bus.Get("asyncTopic")
+	fmt.Println(asyncTopic.Name())
 
 	handler := func(event bus.Event) error {
 		fmt.Println("Handle:", event.ID, event.Topic, event.Payload)
 		return nil
 	}
 
-	_ = t.Subscribe(handler)
+	_ = syncTopic.Subscribe(handler)
+	_ = asyncTopic.Subscribe(handler)
 
 	//stop := make(chan struct{})
 
@@ -61,19 +71,31 @@ func main() {
 	//		select {
 	//		case <-stop:
 	//		default:
-	topic, _ := bus.Publish("someTopic", "Hello", "World")
-	_ = topic.Publish("Another Message")
+	//topic, _ := bus.Publish("syncTopic", "Hello", "World")
+	//_ = topic.Publish("Another Message")
 	//}
 	//
 	//}
 	//}()
 
+	//for i := 0; i < 1000; i++ {
+	//	go func() {
+	//		_, _ = bus.Publish("syncTopic", "Async 1", "Async 2")
+	//	}()
+	//}
+
+	for i := 0; i < 10; i++ {
+		_, _ = bus.Publish("asyncTopic", "Async 1", "Async 2")
+		//_, _ = bus.Publish("syncTopic", "Sync 1", "Sync 2")
+		_, _ = bus.Publish("asyncTopic", "Async 3", "Async 4")
+	}
+
 	//FIXME close / wait
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 
 	//stop <- struct{}{}
 
-	fmt.Println(t)
+	fmt.Println(syncTopic)
 
-	t.Close()
+	syncTopic.Close()
 }

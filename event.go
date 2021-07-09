@@ -6,8 +6,8 @@ type Event struct {
 	Payload interface{}
 }
 
-func newEvent(ID uint64, topic string, payload interface{}) Event {
-	return Event{ID: ID, Topic: topic, Payload: payload}
+func newEvent(generateId func() uint64, topic string, payload interface{}) Event {
+	return Event{ID: generateId(), Topic: topic, Payload: payload}
 }
 
 type EventHandler func(event Event) error

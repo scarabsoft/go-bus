@@ -1,40 +1,40 @@
 package bus
 
-type syncTopic struct {
+type syncTopicImpl struct {
 	abstractTopicImpl
 }
 
-func (s *syncTopic) Publish(data ...interface{}) error {
-	if err := s.abstractTopicImpl.Publish(data); err != nil {
+func (s *syncTopicImpl) Publish(payloads ...interface{}) error {
+	if err := s.abstractTopicImpl.Publish(payloads); err != nil {
 		return err
 	}
 
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 
-	for _, d := range data {
-		e := newEvent(s.idGenerator(), s.name, d)
+	for _, payload := range payloads {
+		evt := newEvent(s.idGenerator, s.name, payload)
 		for _, handler := range s.handlers {
-			_ = handler(e)
+			_ = handler(evt)
 		}
 	}
 	return nil
 }
 
-func (s *syncTopic) Close() error {
+func (s *syncTopicImpl) Close() error {
 	return nil
 }
 
-type SyncTopicBuilder struct {
-	topic syncTopic
+type syncTopicBuilder struct {
+	topic syncTopicImpl
 }
 
-func newSyncTopicBuilder(name string) *SyncTopicBuilder {
-	return &SyncTopicBuilder{topic: syncTopic{
+func newSyncTopicBuilder(name string) *syncTopicBuilder {
+	return &syncTopicBuilder{topic: syncTopicImpl{
 		abstractTopicImpl: newAbstractTopicImpl(name),
 	}}
 }
 
-func (stb *SyncTopicBuilder) Build() Topic {
+func (stb *syncTopicBuilder) build() Topic {
 	return &stb.topic
 }

@@ -8,13 +8,13 @@ import (
 type Bus interface {
 	Get(topic string) Topic
 
-	Publish(topic string, data ...interface{}) (Topic, error)
+	Publish(topic string, payloads ...interface{}) (Topic, error)
 	//
 	//Subscribe(topic string, handler ...event.EventHandler) error
 
 	//Unsubscribe(handler event.EventHandler) error
 
-	CreateTopic(name string, fn func(topic *TopicBuilder) Topic) (Topic, error)
+	CreateTopic(name string, fn func(topic TopicInit) TopicBuilder) (Topic, error)
 }
 
 type busImpl struct {
@@ -32,25 +32,17 @@ func (b *busImpl) Get(topic string) Topic {
 	return b.topics[topic]
 }
 
-func (b *busImpl) Publish(topic string, data ...interface{}) (Topic, error) {
+func (b *busImpl) Publish(topic string, payloads ...interface{}) (Topic, error) {
 	//FIXME if topic does not exist create default one and publish
 	t := b.Get(topic)
-	if err := t.Publish(data...); err != nil {
+	if err := t.Publish(payloads...); err != nil {
 		return nil, err
 	}
 	return t, nil
 }
 
-var SyncTopic = func(topic *TopicBuilder) Topic {
-	return topic.Sync().Build()
-}
-
-//var AsyncTopic = func(topic *TopicBuilder) Topic {
-//	return topic.Async().Build()
-//}
-
 //FIXME should be method which accepts builder instead of options
-func (b *busImpl) CreateTopic(name string, fn func(topic *TopicBuilder) Topic) (Topic, error) {
+func (b *busImpl) CreateTopic(name string, fn func(topic TopicInit) TopicBuilder) (Topic, error) {
 	b.lock.Lock()
 	defer b.lock.Unlock()
 
@@ -59,11 +51,11 @@ func (b *busImpl) CreateTopic(name string, fn func(topic *TopicBuilder) Topic) (
 	// FIXME check whether topic already exists, if so --> error
 	// FIXME add topic
 
-	//result := syncTopic{name: name, handlers: []event.EventHandler{}}
-	//result := topic.asyncTopic{name: name, handlers: []event.EventHandler{}}
+	//result := syncTopicImpl{name: name, handlers: []event.EventHandler{}}
+	//result := topic.asyncTopicImpl{name: name, handlers: []event.EventHandler{}}
 	//result := newAsyncTopic(name)
 
-	result := fn(&TopicBuilder{name: name})
+	result := fn(TopicInit{name: name}).build()
 	fmt.Println(result)
 
 	b.topics[name] = result
