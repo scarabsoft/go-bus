@@ -8,7 +8,7 @@ var (
 	ErrDoesNotExists     = errors.New("topic does not exists")
 	ErrAlreadyExists     = errors.New("topic already exists")
 	ErrAlreadyClosed     = errors.New("topic already closed")
-	ErrAlreadySubscribed = errors.New("handler already subscribed to topic")
+	ErrAlreadySubscribed = errors.New("handler already subscribed")
 )
 
 type Topic interface {
