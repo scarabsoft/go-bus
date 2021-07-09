@@ -1,25 +1,46 @@
 package bus
 
-var (
-	std = newBus()
+import (
+	"fmt"
+	"github.com/scarabsoft/go-bus/internal/bus"
+	"github.com/scarabsoft/go-bus/internal/topic"
+)
 
-	SyncTopic = func(topic TopicInit) TopicBuilder {
-		return newSyncTopicBuilder(topic.name)
+type Event struct {
+	ID      uint64
+	Topic   string
+	Payload interface{}
+}
+
+func (e Event) String() string {
+	return fmt.Sprintf("[%s-%d]: %s", e.Topic, e.ID, e.Payload)
+}
+func EventHandler(handler func(event Event)) func(ID uint64, name string, payload interface{}) {
+	return func(ID uint64, name string, payload interface{}) {
+		handler(Event{ID: ID, Topic: name, Payload: payload})
+	}
+}
+
+var (
+	std = bus.NewBus()
+
+	SyncTopic = func(t topic.TopicInit) topic.TopicBuilder {
+		return topic.NewSyncTopicBuilder(t.Name)
 	}
 
-	AsyncTopic = func(topic TopicInit) TopicBuilder {
-		return newAsyncTopicBuilder(topic.name)
+	AsyncTopic = func(t topic.TopicInit) topic.TopicBuilder {
+		return topic.NewAsyncTopicBuilder(t.Name)
 	}
 )
 
-func Get(topic string) Topic {
+func Get(topic string) topic.Topic {
 	return std.Get(topic)
 }
 
-func Publish(topic string, payloads ...interface{}) (Topic, error) {
+func Publish(topic string, payloads ...interface{}) (topic.Topic, error) {
 	return std.Publish(topic, payloads...)
 }
 
-func CreateTopic(name string, fn func(topic TopicInit) TopicBuilder) (Topic, error) {
+func CreateTopic(name string, fn func(t topic.TopicInit) topic.TopicBuilder) (topic.Topic, error) {
 	return std.CreateTopic(name, fn)
 }

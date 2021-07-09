@@ -1,4 +1,4 @@
-package bus
+package topic
 
 import (
 	"github.com/scarabsoft/go-hamcrest"

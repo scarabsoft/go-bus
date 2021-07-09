@@ -1,58 +1,46 @@
-package bus
+package topic
 
 import (
-	"errors"
 	"sync"
 	"sync/atomic"
 )
 
-var ErrTopicClosed = errors.New("topic already closed")
-
-type Topic interface {
-	Name() string
-	//FIXME Options map[string]interface{} ?
-	Publish(payloads ...interface{}) error
-	Subscribe(handlers ...EventHandler) error
-	Close() error
-}
-
-type TopicInit struct {
-	name string
+func NewTopicInit(name string) *TopicInit {
+	return &TopicInit{Name: name}
 }
 
 func (tbs *TopicInit) Sync() TopicBuilder {
-	return newSyncTopicBuilder(tbs.name)
+	return NewSyncTopicBuilder(tbs.Name)
 }
 
 func (tbs *TopicInit) Async() TopicBuilder {
-	return newAsyncTopicBuilder(tbs.name)
+	return NewAsyncTopicBuilder(tbs.Name)
 }
 
 type TopicBuilder interface {
-	build() Topic
+	Build() Topic
 }
 
-
 type abstractTopicImpl struct {
-	name        string
-	handlers    []EventHandler
-	idGenerator func() uint64
-	lock        sync.RWMutex
+	topic      string
+	handlers   []func(ID uint64, name string, payload interface{})
+	generateID func() uint64
+	lock       sync.RWMutex
 
 	closed bool
 }
 
 func newAbstractTopicImpl(name string) abstractTopicImpl {
 	return abstractTopicImpl{
-		name:        name,
-		handlers:    []EventHandler{},
-		idGenerator: topicIdGenerator(),
-		closed:      false,
+		topic:      name,
+		handlers:   []func(ID uint64, name string, payload interface{}){},
+		generateID: topicIdGenerator(),
+		closed:     false,
 	}
 }
 
 func (a *abstractTopicImpl) Name() string {
-	return a.name
+	return a.topic
 }
 
 func (a *abstractTopicImpl) Publish(data ...interface{}) error {
@@ -60,20 +48,20 @@ func (a *abstractTopicImpl) Publish(data ...interface{}) error {
 	defer a.lock.RUnlock()
 
 	if a.closed {
-		return ErrTopicClosed
+		return ErrAlreadyClosed
 	}
 
 	return nil
 }
 
-func (a *abstractTopicImpl) Subscribe(handler ...EventHandler) error {
+func (a *abstractTopicImpl) Subscribe(handlers ...func(ID uint64, name string, payload interface{})) error {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	if a.closed {
-		return ErrTopicClosed
+		return ErrAlreadyClosed
 	}
-	a.handlers = append(a.handlers, handler...)
+	a.handlers = append(a.handlers, handlers...)
 	return nil
 }
 

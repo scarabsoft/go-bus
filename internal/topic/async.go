@@ -1,28 +1,27 @@
-package bus
+package topic
 
 type asyncTopicImpl struct {
 	abstractTopicImpl
 }
 
 func (a *asyncTopicImpl) Publish(payloads ...interface{}) error {
-	a.lock.RLock()
-	defer a.lock.RUnlock()
 
-	if a.closed {
-		return ErrTopicClosed
+	if err := a.abstractTopicImpl.Publish(payloads); err != nil {
+		return err
 	}
 
 	go func() {
+		a.lock.RLock()
+		defer a.lock.RUnlock()
+
 		for _, payload := range payloads {
-			e := newEvent(a.idGenerator, a.name, payload)
+			//e := event.New(a.generateID, a.topic, payload)
+			id := a.generateID()
 			for _, handler := range a.handlers {
-				_ = handler(e)
+				handler(id, a.topic, payload)
 			}
 		}
 	}()
-	return nil
-}
-func (a *asyncTopicImpl) Close() error {
 	return nil
 }
 
@@ -30,12 +29,12 @@ type asyncTopicBuilder struct {
 	topic asyncTopicImpl
 }
 
-func newAsyncTopicBuilder(name string) *asyncTopicBuilder {
+func NewAsyncTopicBuilder(name string) *asyncTopicBuilder {
 	return &asyncTopicBuilder{topic: asyncTopicImpl{
 		abstractTopicImpl: newAbstractTopicImpl(name),
 	}}
 }
 
-func (atb *asyncTopicBuilder) build() Topic {
+func (atb *asyncTopicBuilder) Build() Topic {
 	return &atb.topic
 }

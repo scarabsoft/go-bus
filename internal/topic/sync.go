@@ -1,4 +1,4 @@
-package bus
+package topic
 
 type syncTopicImpl struct {
 	abstractTopicImpl
@@ -13,15 +13,12 @@ func (s *syncTopicImpl) Publish(payloads ...interface{}) error {
 	defer s.lock.RUnlock()
 
 	for _, payload := range payloads {
-		evt := newEvent(s.idGenerator, s.name, payload)
+		//evt := event.New(s.generateID, s.topic, payload)
+		id := s.generateID()
 		for _, handler := range s.handlers {
-			_ = handler(evt)
+			handler(id, s.topic, payload)
 		}
 	}
-	return nil
-}
-
-func (s *syncTopicImpl) Close() error {
 	return nil
 }
 
@@ -29,12 +26,12 @@ type syncTopicBuilder struct {
 	topic syncTopicImpl
 }
 
-func newSyncTopicBuilder(name string) *syncTopicBuilder {
+func NewSyncTopicBuilder(name string) *syncTopicBuilder {
 	return &syncTopicBuilder{topic: syncTopicImpl{
 		abstractTopicImpl: newAbstractTopicImpl(name),
 	}}
 }
 
-func (stb *syncTopicBuilder) build() Topic {
+func (stb *syncTopicBuilder) Build() Topic {
 	return &stb.topic
 }
