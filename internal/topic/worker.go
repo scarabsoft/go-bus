@@ -15,7 +15,7 @@ func (w *workerTopicImpl) Publish(payloads ...interface{}) error {
 	defer w.lock.RUnlock()
 
 	if w.closed {
-		return ErrAlreadyClosed
+		return ErrorAlreadyClosed{w.name}
 	}
 
 	for _, payload := range payloads {

@@ -7,22 +7,26 @@ import (
 	"testing"
 )
 
-func TestErrors(t *testing.T){
-	t.Run("ErrDoesNotExists", func(t *testing.T) {
+const givenName = "givenName"
+
+func TestErrors(t *testing.T) {
+	t.Run("ErrorNotExists", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
-		assert.That(topic.ErrDoesNotExists.Error(), is.EqualTo("topic does not exists"))
+		testInstance := topic.ErrorNotExists{Name: "givenName"}
+		assert.That(testInstance.Error(), is.EqualTo("givenName does not exists"))
 	})
 	t.Run("ErrAlreadyExists", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
-		assert.That(topic.ErrAlreadyExists.Error(), is.EqualTo("topic already exists"))
+		testInstance := topic.ErrorAlreadyExists{Name: "givenName"}
+		assert.That(testInstance.Error(), is.EqualTo("givenName already exists"))
 	})
 	t.Run("ErrAlreadyClosed", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
-		assert.That(topic.ErrAlreadyClosed.Error(), is.EqualTo("topic already closed"))
+		testInstance := topic.ErrorAlreadyClosed{Name: "givenName"}
+		assert.That(testInstance.Error(), is.EqualTo("givenName already closed"))
 	})
 	t.Run("ErrAlreadySubscribed", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
 		assert.That(topic.ErrAlreadySubscribed.Error(), is.EqualTo("handler already subscribed"))
 	})
 }
-

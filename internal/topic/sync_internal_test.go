@@ -36,13 +36,13 @@ func TestSyncTopicImpl_Publish(t *testing.T) {
 	t.Run("publish to closed topic", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
 
-		testInstance := NewSyncBuilder().Build()
+		testInstance := NewSyncBuilder().Name(givenName).Build()
 		_ = testInstance.Close()
 
 		err := testInstance.Publish(givenPayload)
 
 		assert.That(err, is.NotNil())
-		assert.That(err, is.EqualTo(ErrAlreadyClosed))
+		assert.That(err, is.EqualTo(ErrorAlreadyClosed{Name: givenName}))
 	})
 
 	t.Run("publish once", func(t *testing.T) {

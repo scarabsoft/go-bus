@@ -32,7 +32,7 @@ func (a *abstractTopicImpl) Subscribe(handlers ...func(ID uint64, name string, p
 	defer a.lock.Unlock()
 
 	if a.closed {
-		return ErrAlreadyClosed
+		return ErrorAlreadyClosed{Name: a.name}
 	}
 
 	for _, handler := range handlers {
@@ -52,7 +52,7 @@ func (a *abstractTopicImpl) Unsubscribe(handlers ...func(ID uint64, topic string
 	defer a.lock.Unlock()
 
 	if a.closed {
-		return ErrAlreadyClosed
+		return ErrorAlreadyClosed{Name: a.name}
 	}
 	keep := make([]func(ID uint64, topic string, payload interface{}), 0)
 	for _, currentHandler := range a.handlers {

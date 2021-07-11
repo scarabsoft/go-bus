@@ -120,7 +120,7 @@ func TestCreateTopic(t *testing.T) {
 
 		res, err := testInstance.CreateTopic(givenTopicName, nil)
 
-		assert.That(err, is.EqualTo(topic.ErrDoesNotExists))
+		assert.That(err, is.EqualTo(topic.ErrorNotExists{Name: givenTopicName}))
 		assert.That(res, is.Nil())
 
 		assert.That(testInstance.topics, is.Empty())
@@ -160,7 +160,7 @@ func TestGetTopic(t *testing.T) {
 
 		res, err := testInstance.Get(givenTopicName)
 
-		assert.That(err, is.EqualTo(topic.ErrDoesNotExists))
+		assert.That(err, is.EqualTo(topic.ErrorNotExists{Name: givenTopicName}))
 		assert.That(res, is.Nil())
 
 		assert.That(testInstance.topics, is.Empty())
@@ -187,7 +187,7 @@ func TestPublish(t *testing.T) {
 		testInstance := New()
 
 		err := testInstance.Publish(givenTopicName, givenPayload)
-		assert.That(err, is.EqualTo(topic.ErrDoesNotExists))
+		assert.That(err, is.EqualTo(topic.ErrorNotExists{Name: givenTopicName}))
 
 		assert.That(testInstance.topics, is.Empty())
 	})
@@ -251,7 +251,7 @@ func TestSubscribe(t *testing.T) {
 		testInstance := New()
 
 		err := testInstance.Subscribe(givenTopicName, givenHandler)
-		assert.That(err, is.EqualTo(topic.ErrDoesNotExists))
+		assert.That(err, is.EqualTo(topic.ErrorNotExists{Name: givenTopicName}))
 
 		assert.That(testInstance.topics, is.Empty())
 	})

@@ -9,7 +9,7 @@ func (s *syncTopicImpl) Publish(payloads ...interface{}) error {
 	defer s.lock.RUnlock()
 
 	if s.closed {
-		return ErrAlreadyClosed
+		return ErrorAlreadyClosed{s.name}
 	}
 	
 	for _, payload := range payloads {

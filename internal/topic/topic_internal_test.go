@@ -57,11 +57,12 @@ func TestAbstractTopicImpl_Unsubscribe(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
 
 		testInstance := newAbstractTopicImpl()
+		testInstance.name = givenName
 		testInstance.closed = true
 
 		err := testInstance.Unsubscribe(givenHandler)
 		assert.That(err, is.NotNil())
-		assert.That(err, is.EqualTo(ErrAlreadyClosed))
+		assert.That(err, is.EqualTo(ErrorAlreadyClosed{Name: givenName}))
 	})
 
 	t.Run("Unsubscribe from empty topic", func(t *testing.T) {
@@ -139,11 +140,12 @@ func TestAbstractTopicImpl_Subscribe(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
 
 		testInstance := newAbstractTopicImpl()
+		testInstance.name = givenName
 		testInstance.closed = true
 
 		err := testInstance.Subscribe(givenHandler)
 		assert.That(err, is.NotNil())
-		assert.That(err, is.EqualTo(ErrAlreadyClosed))
+		assert.That(err, is.EqualTo(ErrorAlreadyClosed{Name: givenName}))
 
 		assert.That(testInstance.handlers, is.Empty())
 	})

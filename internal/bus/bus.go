@@ -44,7 +44,7 @@ func (b *busImpl) Unsubscribe(name string, handlers ...func(ID uint64, name stri
 	defer b.lock.Unlock()
 
 	if t, ok := b.topics[name]; !ok {
-		return topic.ErrDoesNotExists
+		return topic.ErrorNotExists{Name: name}
 	} else {
 		return t.Unsubscribe(handlers...)
 	}
@@ -60,7 +60,7 @@ func (b *busImpl) getOrCreateEventually(name string, tb topic.Builder) (topic.To
 
 			// this makes sure that we dont overwrite an existing topic
 			if _, ok := b.topics[name]; ok {
-				return nil, topic.ErrAlreadyExists
+				return nil, topic.ErrorAlreadyExists{Name: name}
 			}
 
 			t = tb.Name(name).Build()
@@ -68,7 +68,7 @@ func (b *busImpl) getOrCreateEventually(name string, tb topic.Builder) (topic.To
 			return t, nil
 		}
 		b.lock.RUnlock()
-		return nil, topic.ErrDoesNotExists
+		return nil, topic.ErrorNotExists{Name: name}
 	} else {
 		b.lock.RUnlock()
 		return t, nil
