@@ -76,7 +76,7 @@ func Get(name string) (topic.Topic, error) {
 	return std.Get(name)
 }
 
-func CreateTopicIfNotExists(tb topic.Builder) {
+func SetDefaultTopicBuilder(tb topic.Builder) {
 	std.SetDefaultTopicBuilder(tb)
 }
 
