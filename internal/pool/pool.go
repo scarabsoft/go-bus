@@ -47,7 +47,7 @@ func (p *poolImpl) Close() error {
 	return nil
 }
 
-func New(options Options) Pool {
+func New(options Options) *poolImpl {
 	result := &poolImpl{
 		options: options,
 		queue:   make(chan Task, options.MaxQueueSize),
