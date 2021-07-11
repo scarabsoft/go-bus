@@ -13,5 +13,5 @@ type Bus interface {
 
 	Get(name string) (topic.Topic, error)
 
-	DeleteTopic(name string)
+	DeleteTopic(name string) error
 }

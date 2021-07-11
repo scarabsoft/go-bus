@@ -78,25 +78,32 @@ var ErrTestSubscribeError = errors.New("ErrTestSubscribeError")
 var ErrTestUnsubscribeError = errors.New("ErrTestUnsubscribeError")
 var ErrTestCloseError = errors.New("ErrTestCloseError")
 
-type failingTopic struct{}
+type failingTopic struct {
+	spyTopicImpl
+}
 
-func (f failingTopic) Name() string {
+func (f *failingTopic) Name() string {
+	_ = f.spyTopicImpl.Name()
 	return ""
 }
 
-func (f failingTopic) Publish(...interface{}) error {
+func (f *failingTopic) Publish(...interface{}) error {
+	_ = f.spyTopicImpl.Publish()
 	return ErrTestPublishError
 }
 
-func (f failingTopic) Subscribe(...func(ID uint64, topic string, payload interface{})) error {
+func (f *failingTopic) Subscribe(...func(ID uint64, topic string, payload interface{})) error {
+	_ = f.spyTopicImpl.Subscribe()
 	return ErrTestSubscribeError
 }
 
-func (f failingTopic) Unsubscribe(...func(ID uint64, topic string, payload interface{})) error {
+func (f *failingTopic) Unsubscribe(...func(ID uint64, topic string, payload interface{})) error {
+	_ = f.spyTopicImpl.Unsubscribe()
 	return ErrTestUnsubscribeError
 }
 
-func (f failingTopic) Close() error {
+func (f *failingTopic) Close() error {
+	_ = f.spyTopicImpl.Close()
 	return ErrTestCloseError
 }
 
@@ -298,12 +305,122 @@ func TestSubscribe(t *testing.T) {
 	t.Run("subscribing failed", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
 
+		failTopic := &failingTopic{}
+
 		testInstance := New()
-		testInstance.topics[givenTopicName] = &failingTopic{}
+		testInstance.topics[givenTopicName] = failTopic
 
 		err := testInstance.Subscribe(givenTopicName, givenHandler, givenHandler, givenHandler)
 		assert.That(err, is.NotNil())
 		assert.That(err, is.EqualTo(ErrTestSubscribeError))
 
+		assert.That(failTopic.PublishCount, is.EqualTo(0))
+		assert.That(failTopic.CloseCount, is.EqualTo(0))
+		assert.That(failTopic.NameCount, is.EqualTo(0))
+		assert.That(failTopic.SubscribeCount, is.EqualTo(1))
+		assert.That(failTopic.UnsubscribeCount, is.EqualTo(0))
+
+	})
+}
+
+func TestUnsubscribe(t *testing.T) {
+	t.Run("unsubscribe from topic which does not exists", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := New()
+
+		err := testInstance.Unsubscribe(givenTopicName, givenHandler)
+		assert.That(err, is.EqualTo(topic.ErrorNotExists{Name: givenTopicName}))
+
+		assert.That(testInstance.topics, is.Empty())
+	})
+
+	t.Run("unsubscribe from topic", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		spyTopic := &spyTopicImpl{}
+
+		testInstance := New()
+		testInstance.topics[givenTopicName] = spyTopic
+
+		err := testInstance.Unsubscribe(givenTopicName, givenHandler)
+		assert.That(err, is.Nil())
+
+		assert.That(spyTopic.PublishCount, is.EqualTo(0))
+		assert.That(spyTopic.CloseCount, is.EqualTo(0))
+		assert.That(spyTopic.NameCount, is.EqualTo(0))
+		assert.That(spyTopic.SubscribeCount, is.EqualTo(0))
+		assert.That(spyTopic.UnsubscribeCount, is.EqualTo(1))
+	})
+
+	t.Run("unsubscribing failed", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		failTopic := &failingTopic{}
+
+		testInstance := New()
+		testInstance.topics[givenTopicName] = failTopic
+
+		err := testInstance.Unsubscribe(givenTopicName, givenHandler, givenHandler, givenHandler)
+		assert.That(err, is.NotNil())
+		assert.That(err, is.EqualTo(ErrTestUnsubscribeError))
+
+		assert.That(failTopic.PublishCount, is.EqualTo(0))
+		assert.That(failTopic.CloseCount, is.EqualTo(0))
+		assert.That(failTopic.NameCount, is.EqualTo(0))
+		assert.That(failTopic.SubscribeCount, is.EqualTo(0))
+		assert.That(failTopic.UnsubscribeCount, is.EqualTo(1))
+	})
+}
+
+func TestBusImpl_DeleteTopic(t *testing.T) {
+	t.Run("delete topic which does not exists", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		testInstance := New()
+
+		err := testInstance.DeleteTopic(givenTopicName)
+		assert.That(err, is.EqualTo(topic.ErrorNotExists{Name: givenTopicName}))
+
+		assert.That(testInstance.topics, is.Empty())
+	})
+
+	t.Run("delete topic", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		spyTopic := &spyTopicImpl{}
+
+		testInstance := New()
+		testInstance.topics[givenTopicName] = spyTopic
+
+		err := testInstance.DeleteTopic(givenTopicName)
+		assert.That(err, is.Nil())
+
+		assert.That(spyTopic.PublishCount, is.EqualTo(0))
+		assert.That(spyTopic.CloseCount, is.EqualTo(1))
+		assert.That(spyTopic.NameCount, is.EqualTo(0))
+		assert.That(spyTopic.SubscribeCount, is.EqualTo(0))
+		assert.That(spyTopic.UnsubscribeCount, is.EqualTo(0))
+
+		assert.That(testInstance.topics, is.Empty())
+	})
+
+	t.Run("deleting failed", func(t *testing.T) {
+		assert := hamcrest.NewAssertion(t)
+
+		failTopic := &failingTopic{}
+
+		testInstance := New()
+		testInstance.topics[givenTopicName] = failTopic
+
+		err := testInstance.DeleteTopic(givenTopicName)
+		assert.That(err, is.NotNil())
+		assert.That(err, is.EqualTo(ErrTestCloseError))
+
+		assert.That(failTopic.PublishCount, is.EqualTo(0))
+		assert.That(failTopic.CloseCount, is.EqualTo(1))
+		assert.That(failTopic.NameCount, is.EqualTo(0))
+		assert.That(failTopic.SubscribeCount, is.EqualTo(0))
+		assert.That(failTopic.UnsubscribeCount, is.EqualTo(0))
 	})
 }

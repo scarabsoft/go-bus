@@ -12,17 +12,17 @@ const givenName = "givenName"
 func TestErrors(t *testing.T) {
 	t.Run("ErrorNotExists", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
-		testInstance := topic.ErrorNotExists{Name: "givenName"}
+		testInstance := topic.ErrorNotExists{Name: givenName}
 		assert.That(testInstance.Error(), is.EqualTo("givenName does not exists"))
 	})
 	t.Run("ErrAlreadyExists", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
-		testInstance := topic.ErrorAlreadyExists{Name: "givenName"}
+		testInstance := topic.ErrorAlreadyExists{Name: givenName}
 		assert.That(testInstance.Error(), is.EqualTo("givenName already exists"))
 	})
 	t.Run("ErrAlreadyClosed", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
-		testInstance := topic.ErrorAlreadyClosed{Name: "givenName"}
+		testInstance := topic.ErrorAlreadyClosed{Name: givenName}
 		assert.That(testInstance.Error(), is.EqualTo("givenName already closed"))
 	})
 	t.Run("ErrAlreadySubscribed", func(t *testing.T) {

@@ -174,7 +174,7 @@ func TestAbstractTopicImpl_Subscribe(t *testing.T) {
 		assert.That(testInstance.handlers, has.Items(givenHandler, anotherHandler))
 	})
 
-	t.Run("Subscribe twice and stop execution", func(t *testing.T) {
+	t.Run("Subscribe twice stops execution", func(t *testing.T) {
 		assert := hamcrest.NewAssertion(t)
 
 		testInstance := newAbstractTopicImpl()

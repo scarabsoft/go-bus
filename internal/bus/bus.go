@@ -85,8 +85,21 @@ func (b *busImpl) Get(name string) (topic.Topic, error) {
 	return b.getOrCreateEventually(name, b.defaultTopicBuilder)
 }
 
-func (b *busImpl) DeleteTopic(name string) {
-	panic("implement me")
+func (b *busImpl) DeleteTopic(name string) error {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	// this makes sure that we dont overwrite an existing topic
+	if t, ok := b.topics[name]; !ok {
+		return topic.ErrorNotExists{Name: name}
+	} else {
+		delete(b.topics, name)
+		if err := t.Close(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // sets the default topic builder
