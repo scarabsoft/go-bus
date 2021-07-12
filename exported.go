@@ -40,7 +40,7 @@ var (
 	WorkerTopic = NewWorkerTopicBuilder()
 )
 
-func DefaultBus() bus.Bus {
+func Default() bus.Bus {
 	return std
 }
 
