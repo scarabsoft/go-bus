@@ -40,6 +40,10 @@ var (
 	WorkerTopic = NewWorkerTopicBuilder()
 )
 
+func DefaultBus() bus.Bus {
+	return std
+}
+
 func DefaultAsyncPool() pool.Pool {
 	defaultAsyncPoolOnce.Do(func() {
 		defaultAsyncPool = pool.New(pool.Options{
