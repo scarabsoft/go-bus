@@ -22,7 +22,7 @@ func TestEvent_String(t *testing.T) {
 		Payload: givenPayload,
 	}
 
-	assert.That(givenEvent.String(), is.EqualTo("[TestTopic-42]: Payload"))
+	assert.That(givenEvent.String(), is.EqualTo("[TestTopic-42]: string(Payload)"))
 }
 
 func TestEventHandler(t *testing.T) {
