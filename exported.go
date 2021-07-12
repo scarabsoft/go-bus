@@ -16,7 +16,7 @@ type Event struct {
 }
 
 func (e Event) String() string {
-	return fmt.Sprintf("[%s-%d]: %s", e.Topic, e.ID, e.Payload)
+	return fmt.Sprintf("[%s-%d]: %[3]T(%[3]v)", e.Topic, e.ID, e.Payload)
 }
 func EventHandler(handler func(event Event)) func(ID uint64, name string, payload interface{}) {
 	return func(ID uint64, name string, payload interface{}) {
@@ -76,8 +76,12 @@ func Get(name string) (topic.Topic, error) {
 	return std.Get(name)
 }
 
-func SetDefaultTopicBuilder(tb topic.Builder) {
-	std.SetDefaultTopicBuilder(tb)
+func DeleteTopic(name string) error {
+	return std.DeleteTopic(name)
+}
+
+func SetDefaultTopicBuilder(tb TopicBuilder) {
+	std.SetDefaultTopicBuilder(tb.Build())
 }
 
 type TopicBuilder interface {
@@ -111,6 +115,11 @@ func NewWorkerTopicBuilder() *WorkerTopicBuilder {
 	return &WorkerTopicBuilder{p: DefaultWorkerPool()}
 }
 
-func (w WorkerTopicBuilder) Build() topic.Builder {
+func (w *WorkerTopicBuilder) Pool(p pool.Pool) *WorkerTopicBuilder {
+	w.p = p
+	return w
+}
+
+func (w *WorkerTopicBuilder) Build() topic.Builder {
 	return topic.NewWorkerBuilder(w.p)
 }
