@@ -141,3 +141,30 @@ func (w *WorkerTopicBuilder) Pool(p pool.Pool) *WorkerTopicBuilder {
 func (w *WorkerTopicBuilder) Build() topic.Builder {
 	return topic.NewWorkerBuilder(w.p)
 }
+
+type PoolOption func(options *pool.Options)
+
+func WithMaxWorkers(maxWorkers int) PoolOption {
+	return func(o *pool.Options) {
+		o.MaxWorkers = maxWorkers
+	}
+}
+
+func WithMaxQueueSize(maxQueueSize int) PoolOption {
+	return func(o *pool.Options) {
+		o.MaxQueueSize = maxQueueSize
+	}
+}
+
+func NewPool(options ...PoolOption) pool.Pool {
+	o := pool.Options{
+		MaxQueueSize: 1,
+		MaxWorkers:   1,
+	}
+
+	for _, opt := range options {
+		opt(&o)
+	}
+
+	return pool.New(o)
+}

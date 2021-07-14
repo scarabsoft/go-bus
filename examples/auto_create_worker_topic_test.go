@@ -3,7 +3,6 @@ package examples
 import (
 	"fmt"
 	"github.com/scarabsoft/go-bus"
-	"github.com/scarabsoft/go-bus/internal/pool"
 	"github.com/scarabsoft/go-hamcrest"
 	"github.com/scarabsoft/go-hamcrest/is"
 	"strconv"
@@ -14,10 +13,10 @@ import (
 func TestAutoCreate(t *testing.T) {
 	// we want every not existing topic run on the same worker pool by that we are able to configure
 	// tasks running together and find good queue sizes
-	p := pool.New(pool.Options{
-		MaxQueueSize: 4,
-		MaxWorkers:   2,
-	})
+	p := bus.NewPool(
+		bus.WithMaxQueueSize(4),
+		bus.WithMaxWorkers(2),
+	)
 
 	require := hamcrest.NewRequirement(t)
 
