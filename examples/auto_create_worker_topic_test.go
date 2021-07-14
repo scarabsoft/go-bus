@@ -24,8 +24,8 @@ func TestAutoCreate(t *testing.T) {
 	// every not existing topic should be build by the provided builder
 	bus.SetDefaultTopicBuilder(bus.WorkerTopic.Pool(p))
 
-	err := bus.Subscribe("autoCreatedTopic", bus.EventHandler(func(event bus.Event) {
-		fmt.Println("PrintHandler", event)
+	err := bus.Subscribe("autoCreatedTopic", bus.EventHandler(func(evt bus.Event) {
+		fmt.Println("PrintHandler", evt)
 	}))
 	require.That(err, is.Nil())
 

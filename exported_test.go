@@ -28,9 +28,9 @@ func TestEvent_String(t *testing.T) {
 func TestEventHandler(t *testing.T) {
 	assert := hamcrest.NewAssertion(t)
 
-	bus.EventHandler(func(event bus.Event) {
-		assert.That(event.ID, is.EqualTo(givenID))
-		assert.That(event.Topic, is.EqualTo(givenTopic))
-		assert.That(event.Payload, is.EqualTo(givenPayload))
+	bus.EventHandler(func(evt bus.Event) {
+		assert.That(evt.ID, is.EqualTo(givenID))
+		assert.That(evt.Topic, is.EqualTo(givenTopic))
+		assert.That(evt.Payload, is.EqualTo(givenPayload))
 	})(givenID, givenTopic, givenPayload)
 }

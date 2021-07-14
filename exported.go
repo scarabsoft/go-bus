@@ -32,7 +32,7 @@ type Event struct {
 func (e Event) String() string {
 	return fmt.Sprintf("[%s-%d]: %[3]T(%[3]v)", e.Topic, e.ID, e.Payload)
 }
-func EventHandler(handler func(event Event)) func(ID uint64, name string, payload interface{}) {
+func EventHandler(handler func(evt Event)) func(ID uint64, name string, payload interface{}) {
 	return func(ID uint64, name string, payload interface{}) {
 		handler(Event{ID: ID, Topic: name, Payload: payload})
 	}

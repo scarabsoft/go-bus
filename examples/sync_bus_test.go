@@ -20,9 +20,9 @@ func TestSyncBus(t *testing.T) {
 	_, err = bus.CreateTopic("metricsTopic", bus.SyncTopic)
 	require.That(err, is.Nil())
 
-	//register a simple event handler which just prints data received
-	printHandler := bus.EventHandler(func(event bus.Event) {
-		fmt.Println("PrintHandler - ", event)
+	//register a simple evt handler which just prints data received
+	printHandler := bus.EventHandler(func(evt bus.Event) {
+		fmt.Println("PrintHandler - ", evt)
 	})
 
 	// simulates doing some metrics calculation and publish to metricsTopic
